@@ -69,14 +69,14 @@ function Navigation() {
             <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
               Accueil
             </Link>
+            <Link to="/a-propos" className="text-muted-foreground hover:text-foreground transition-colors">
+              À propos
+            </Link>
             <Link to="/produits" className="text-muted-foreground hover:text-foreground transition-colors">
               Produits
             </Link>
             <Link to="/suivi-commande" className="text-muted-foreground hover:text-foreground transition-colors">
               Suivi commande
-            </Link>
-            <Link to="/a-propos" className="text-muted-foreground hover:text-foreground transition-colors">
-              À propos
             </Link>
             <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
               Contact
@@ -132,6 +132,13 @@ function Navigation() {
                 Accueil
               </Link>
               <Link 
+                to="/a-propos" 
+                className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                À propos
+              </Link>
+              <Link 
                 to="/produits" 
                 className="text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -144,13 +151,6 @@ function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Suivi commande
-              </Link>
-              <Link 
-                to="/a-propos" 
-                className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                À propos
               </Link>
               <Link 
                 to="/contact" 
