@@ -81,11 +81,6 @@ function Navigation() {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/suivi-commande">
-              <Package className="h-4 w-4" />
-            </Link>
-          </Button>
           <CartIcon />
         </div>
       </div>
