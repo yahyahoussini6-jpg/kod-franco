@@ -7,7 +7,6 @@ interface ThemeContextType {
   accent: AccentTheme;
   highContrast: boolean;
   setMode: (mode: ThemeMode) => void;
-  setAccent: (accent: AccentTheme) => void;
   setHighContrast: (enabled: boolean) => void;
   resolvedTheme: 'light' | 'dark';
 }
@@ -25,22 +24,19 @@ export function useTheme() {
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultMode?: ThemeMode;
-  defaultAccent?: AccentTheme;
   defaultHighContrast?: boolean;
 }
 
 export function ThemeProvider({
   children,
   defaultMode = 'system',
-  defaultAccent = 'neutral',
   defaultHighContrast = false,
 }: ThemeProviderProps) {
   const [storedMode, setStoredMode] = useLocalStorage<ThemeMode>('admin.theme.mode', defaultMode);
-  const [storedAccent, setStoredAccent] = useLocalStorage<AccentTheme>('admin.theme.accent', defaultAccent);
   const [storedHighContrast, setStoredHighContrast] = useLocalStorage<boolean>('admin.theme.hc', defaultHighContrast);
   
   const [mode, setMode] = useState<ThemeMode>(storedMode);
-  const [accent, setAccent] = useState<AccentTheme>(storedAccent);
+  const accent: AccentTheme = 'brown';
   const [highContrast, setHighContrast] = useState<boolean>(storedHighContrast);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
@@ -95,10 +91,6 @@ export function ThemeProvider({
     setStoredMode(newMode);
   };
 
-  const handleAccentChange = (newAccent: AccentTheme) => {
-    setAccent(newAccent);
-    setStoredAccent(newAccent);
-  };
 
   const handleHighContrastChange = (enabled: boolean) => {
     setHighContrast(enabled);
@@ -112,7 +104,6 @@ export function ThemeProvider({
         accent,
         highContrast,
         setMode: handleModeChange,
-        setAccent: handleAccentChange,
         setHighContrast: handleHighContrastChange,
         resolvedTheme,
       }}

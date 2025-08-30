@@ -11,7 +11,7 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/theme/ThemeProvider';
-import { ThemeMode, AccentTheme } from '@/theme/tokens';
+import { ThemeMode } from '@/theme/tokens';
 
 interface ThemeSwitcherProps {
   variant?: 'default' | 'ghost' | 'outline';
@@ -19,7 +19,7 @@ interface ThemeSwitcherProps {
 }
 
 export function ThemeSwitcher({ variant = 'ghost', size = 'sm' }: ThemeSwitcherProps) {
-  const { mode, accent, highContrast, setMode, setAccent, setHighContrast, resolvedTheme } = useTheme();
+  const { mode, highContrast, setMode, setHighContrast, resolvedTheme } = useTheme();
 
   const modeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
     { value: 'system', label: 'Système', icon: <Monitor className="mr-2 h-4 w-4" /> },
@@ -27,11 +27,6 @@ export function ThemeSwitcher({ variant = 'ghost', size = 'sm' }: ThemeSwitcherP
     { value: 'dark', label: 'Sombre', icon: <Moon className="mr-2 h-4 w-4" /> },
   ];
 
-  const accentOptions: { value: AccentTheme; label: string; color: string }[] = [
-    { value: 'olive', label: 'Olive / Zayna', color: '#636b2f' },
-    { value: 'purple', label: 'Purple / BrandHUB', color: '#582BAF' },
-    { value: 'neutral', label: 'Neutre', color: '#2563eb' },
-  ];
 
   return (
     <DropdownMenu>
@@ -70,27 +65,6 @@ export function ThemeSwitcher({ variant = 'ghost', size = 'sm' }: ThemeSwitcherP
             {icon}
             {label}
             {mode === value && <Check className="ml-auto h-4 w-4" />}
-          </DropdownMenuItem>
-        ))}
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-          Accent
-        </DropdownMenuLabel>
-        {accentOptions.map(({ value, label, color }) => (
-          <DropdownMenuItem
-            key={value}
-            onClick={() => setAccent(value)}
-            className="cursor-pointer"
-          >
-            <div 
-              className="mr-2 h-4 w-4 rounded-full border"
-              style={{ backgroundColor: color }}
-              aria-hidden="true"
-            />
-            {label}
-            {accent === value && <Check className="ml-auto h-4 w-4" />}
           </DropdownMenuItem>
         ))}
         
