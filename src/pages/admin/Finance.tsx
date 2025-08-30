@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
+import { ExportDialog } from '@/components/ExportDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +34,8 @@ export default function FinancePage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportType, setExportType] = useState<'sales_journal' | 'cogs_statement' | 'vat_invoices' | 'cod_reconciliation'>('sales_journal');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -128,41 +131,28 @@ export default function FinancePage() {
 
   // Export functions
   const handleExportAccounting = () => {
-    if (!transactions || !orders) {
-      toast({
-        title: "Erreur",
-        description: "Aucune donnée à exporter",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const csvData = transactions.map(t => ({
-      'Référence': t.reference_number || t.id.slice(0, 8),
-      'Type': t.transaction_type,
-      'Montant': t.amount,
-      'Statut': t.status,
-      'Date': formatDate(t.created_at),
-      'Description': t.description || '',
-      'Client': t.customer_profiles?.full_name || t.orders?.client_nom || 'N/A'
-    }));
-    
-    const csv = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `finance-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    
-    toast({
-      title: "Export réussi",
-      description: "Le fichier comptabilité a été téléchargé"
-    });
+    setExportType('sales_journal');
+    setShowExportDialog(true);
+  };
+
+  const handleExportCOGS = () => {
+    setExportType('cogs_statement');
+    setShowExportDialog(true);
+  };
+
+  const handleExportVAT = () => {
+    setExportType('vat_invoices');
+    setShowExportDialog(true);
+  };
+
+  const handleExportCOD = () => {
+    setExportType('cod_reconciliation');
+    setShowExportDialog(true);
+  };
+
+  const handleQuickExport = (type: 'sales_journal' | 'cogs_statement' | 'vat_invoices' | 'cod_reconciliation') => {
+    setExportType(type);
+    setShowExportDialog(true);
   };
 
   const handleCreateInvoice = () => {
@@ -649,38 +639,38 @@ export default function FinancePage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col"
-                onClick={() => handleExportAccounting()}
-              >
-                <FileText className="mb-2 h-6 w-6" />
-                <span>Journal des Ventes</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col"
-                onClick={() => toast({ title: "Export COGS", description: "Fonctionnalité en développement" })}
-              >
-                <Calculator className="mb-2 h-6 w-6" />
-                <span>État COGS</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col"
-                onClick={() => toast({ title: "Factures TVA", description: "Fonctionnalité en développement" })}
-              >
-                <Receipt className="mb-2 h-6 w-6" />
-                <span>Factures TVA</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col"
-                onClick={() => toast({ title: "Réconciliation COD", description: "Fonctionnalité en développement" })}
-              >
-                <DollarSign className="mb-2 h-6 w-6" />
-                <span>Réconciliation COD</span>
-              </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={handleQuickExport.bind(null, 'sales_journal')}
+            >
+              <FileText className="mb-2 h-6 w-6" />
+              <span>Journal des Ventes</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={handleQuickExport.bind(null, 'cogs_statement')}
+            >
+              <Calculator className="mb-2 h-6 w-6" />
+              <span>État COGS</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={handleQuickExport.bind(null, 'vat_invoices')}
+            >
+              <Receipt className="mb-2 h-6 w-6" />
+              <span>Factures TVA</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={handleQuickExport.bind(null, 'cod_reconciliation')}
+            >
+              <DollarSign className="mb-2 h-6 w-6" />
+              <span>Réconciliation COD</span>
+            </Button>
             </div>
           </CardContent>
         </Card>
@@ -689,6 +679,12 @@ export default function FinancePage() {
       <InvoiceDialog 
         open={showInvoiceDialog} 
         onOpenChange={setShowInvoiceDialog} 
+      />
+      
+      <ExportDialog 
+        open={showExportDialog} 
+        onOpenChange={setShowExportDialog} 
+        exportType={exportType}
       />
     </>
   );
