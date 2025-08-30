@@ -81,28 +81,60 @@ export default function AdminProducts() {
 
   // Upload image files
   const uploadImages = async (files: File[]): Promise<Array<{type: string, url: string}>> => {
-    const uploadPromises = files.map(async (file) => {
+    const convertWebpToPng = async (file: File): Promise<File> => {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas not supported');
+      ctx.drawImage(bitmap, 0, 0);
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+      if (!blob) throw new Error('Failed to convert image');
+      const nameNoExt = file.name.replace(/\.[^.]+$/, '');
+      return new File([blob], `${nameNoExt}.png`, { type: 'image/png' });
+    };
+
+    const uploadSingle = async (original: File): Promise<{ type: string; url: string }> => {
+      let file = original;
+      // Convert WEBP to PNG to bypass storage mime restriction
+      if (file.type === 'image/webp') {
+        try {
+          file = await convertWebpToPng(file);
+        } catch (e) {
+          console.warn('WEBP conversion failed, falling back to original file', e);
+        }
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `images/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('models')
-        .upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+      // Try upload; if mime is rejected, retry as PNG conversion
+      const attemptUpload = async (f: File): Promise<string> => {
+        const { error: uploadError } = await supabase.storage
+          .from('models')
+          .upload(filePath, f, { upsert: true, contentType: f.type || 'application/octet-stream' });
+        if (uploadError) {
+          // If mime unsupported, try converting to PNG
+          if (String(uploadError.message || '').toLowerCase().includes('mime type') && f.type !== 'image/png') {
+            const pngFile = await convertWebpToPng(original);
+            return attemptUpload(pngFile);
+          }
+          console.error('Image upload error:', uploadError);
+          throw uploadError;
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from('models')
+          .getPublicUrl(filePath);
+        return publicUrl;
+      };
 
-      if (uploadError) {
-        console.error('Image upload error:', uploadError);
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('models')
-        .getPublicUrl(filePath);
-
+      const publicUrl = await attemptUpload(file);
       return { type: 'image', url: publicUrl };
-    });
+    };
 
-    return Promise.all(uploadPromises);
+    return Promise.all(files.map(uploadSingle));
   };
 
   // Fetch products
