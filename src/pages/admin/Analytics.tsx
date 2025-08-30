@@ -337,25 +337,29 @@ export default function AdminAnalytics() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
               title="Confirmation Rate"
-              value="--"
+              value={funnelChartData[1] && funnelChartData[0] ? 
+                formatPercentage(funnelChartData[1].count / Math.max(funnelChartData[0].count, 1)) : '0%'}
               icon={TrendingUp}
               subtitle="Confirmée ÷ Nouvelle"
             />
             <KpiCard
               title="Pack Rate"
-              value="--"
+              value={funnelChartData[2] && funnelChartData[1] ? 
+                formatPercentage(funnelChartData[2].count / Math.max(funnelChartData[1].count, 1)) : '0%'}
               icon={Package}
               subtitle="En préparation ÷ Confirmée"
             />
             <KpiCard
               title="Ship Rate"
-              value="--"
+              value={funnelChartData[3] && funnelChartData[2] ? 
+                formatPercentage(funnelChartData[3].count / Math.max(funnelChartData[2].count, 1)) : '0%'}
               icon={TrendingUp}
               subtitle="Expédiée ÷ En préparation"
             />
             <KpiCard
               title="Overall Delivered"
-              value="--"
+              value={funnelChartData[4] && funnelChartData[0] ? 
+                formatPercentage(funnelChartData[4].count / Math.max(funnelChartData[0].count, 1)) : '0%'}
               icon={Target}
               subtitle="Livrée ÷ Nouvelle"
             />
