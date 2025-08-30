@@ -38,6 +38,7 @@ export default function AdminProducts() {
   const [showDialog, setShowDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [newColor, setNewColor] = useState('');
   const [newSize, setNewSize] = useState('');
 
@@ -75,6 +76,29 @@ export default function AdminProducts() {
     return publicUrl;
   };
 
+  // Upload image files
+  const uploadImages = async (files: File[]): Promise<Array<{type: string, url: string}>> => {
+    const uploadPromises = files.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('models')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('models')
+        .getPublicUrl(filePath);
+
+      return { type: 'image', url: publicUrl };
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products'],
@@ -96,10 +120,17 @@ export default function AdminProducts() {
       
       try {
         let modelUrl = editingProduct?.model_url;
+        let mediaArray = editingProduct?.media || [];
         
         // Upload model file if one is selected
         if (modelFile) {
           modelUrl = await uploadModel(modelFile);
+        }
+
+        // Upload image files if any are selected
+        if (imageFiles.length > 0) {
+          const newImages = await uploadImages(imageFiles);
+          mediaArray = [...mediaArray, ...newImages];
         }
 
         const productData = {
@@ -110,6 +141,7 @@ export default function AdminProducts() {
           en_stock: data.en_stock,
           variables: data.variables || {},
           model_url: modelUrl,
+          media: mediaArray,
         };
 
         if (data.id) {
@@ -137,6 +169,7 @@ export default function AdminProducts() {
       setShowDialog(false);
       setEditingProduct(null);
       setModelFile(null);
+      setImageFiles([]);
       form.reset();
     },
     onError: (error) => {
@@ -238,6 +271,7 @@ export default function AdminProducts() {
               onClick={() => {
                 setEditingProduct(null);
                 setModelFile(null);
+                setImageFiles([]);
                 setNewColor('');
                 setNewSize('');
                 form.reset();
@@ -349,6 +383,42 @@ export default function AdminProducts() {
                       )}
                     />
 
+                    {/* Image Upload */}
+                    <div className="space-y-2">
+                      <FormLabel>Images du produit</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
+                          className="flex-1"
+                        />
+                        {editingProduct?.media && Array.isArray(editingProduct.media) && 
+                         editingProduct.media.filter((m: any) => m.type === 'image').length > 0 && (
+                          <Badge variant="secondary">
+                            <Upload className="h-3 w-3 mr-1" />
+                            {editingProduct.media.filter((m: any) => m.type === 'image').length} images
+                          </Badge>
+                        )}
+                      </div>
+                      {editingProduct?.media && Array.isArray(editingProduct.media) && (
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {editingProduct.media
+                            .filter((m: any) => m.type === 'image')
+                            .slice(0, 4)
+                            .map((image: any, index: number) => (
+                            <img
+                              key={index}
+                              src={image.url}
+                              alt={`Product image ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {/* 3D Model Upload */}
                     <div className="space-y-2">
                       <FormLabel>Modèle 3D (.obj)</FormLabel>
@@ -366,12 +436,6 @@ export default function AdminProducts() {
                           </Badge>
                         )}
                       </div>
-                      {editingProduct?.model_url && (
-                        <div className="mt-4">
-                          <p className="text-sm text-muted-foreground mb-2">Aperçu du modèle actuel :</p>
-                          <ModelViewer3D urlObj={editingProduct.model_url} />
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -472,6 +536,7 @@ export default function AdminProducts() {
                     onClick={() => {
                       setShowDialog(false);
                       setModelFile(null);
+                      setImageFiles([]);
                       setNewColor('');
                       setNewSize('');
                     }}

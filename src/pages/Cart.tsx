@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { formatPrice } from '@/lib/format';
@@ -44,12 +45,26 @@ export default function Cart() {
             <Card key={item.product_id}>
               <CardContent className="p-3 md:p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base md:text-lg truncate">{item.product_nom}</h3>
-                    <p className="text-primary font-semibold text-sm md:text-base">
-                      {formatPrice(item.product_prix)}
-                    </p>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base md:text-lg truncate">{item.product_nom}</h3>
+                  {item.variables && (item.variables.color || item.variables.size) && (
+                    <div className="flex gap-2 mt-1">
+                      {item.variables.color && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.variables.color}
+                        </Badge>
+                      )}
+                      {item.variables.size && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.variables.size}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-primary font-semibold text-sm md:text-base">
+                    {formatPrice(item.product_prix)}
+                  </p>
+                </div>
 
                   <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                     {/* Contrôles de quantité */}
@@ -106,8 +121,15 @@ export default function Cart() {
               
               <div className="space-y-2 mb-4">
                 {items.map((item) => (
-                  <div key={item.product_id} className="flex justify-between text-xs md:text-sm">
-                    <span className="truncate mr-2">{item.product_nom} x{item.quantite}</span>
+                  <div key={`${item.product_id}-${JSON.stringify(item.variables || {})}`} className="flex justify-between text-xs md:text-sm">
+                    <span className="truncate mr-2">
+                      {item.product_nom} x{item.quantite}
+                      {item.variables && (item.variables.color || item.variables.size) && (
+                        <span className="text-muted-foreground ml-1">
+                          ({[item.variables.color, item.variables.size].filter(Boolean).join(', ')})
+                        </span>
+                      )}
+                    </span>
                     <span className="font-medium">{formatPrice(item.product_prix * item.quantite)}</span>
                   </div>
                 ))}

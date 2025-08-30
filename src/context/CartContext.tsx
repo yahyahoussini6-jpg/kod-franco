@@ -5,11 +5,15 @@ export interface CartItem {
   product_nom: string;
   product_prix: number;
   quantite: number;
+  variables?: {
+    color?: string;
+    size?: string;
+  };
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'quantite'>) => void;
+  addItem: (item: Omit<CartItem, 'quantite'> & { quantite?: number }) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantite: number) => void;
   clearCart: () => void;
@@ -34,17 +38,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);
 
-  const addItem = (newItem: Omit<CartItem, 'quantite'>) => {
-    setItems(current => {
-      const existing = current.find(item => item.product_id === newItem.product_id);
-      if (existing) {
-        return current.map(item =>
-          item.product_id === newItem.product_id
-            ? { ...item, quantite: item.quantite + 1 }
-            : item
-        );
+  const addItem = (newItem: Omit<CartItem, 'quantite'> & { quantite?: number }) => {
+    setItems(currentItems => {
+      // Check if item with same product_id and variables already exists
+      const existingItemIndex = currentItems.findIndex(item => 
+        item.product_id === newItem.product_id && 
+        JSON.stringify(item.variables || {}) === JSON.stringify(newItem.variables || {})
+      );
+      
+      if (existingItemIndex >= 0) {
+        // Item exists, update quantity
+        const updatedItems = [...currentItems];
+        updatedItems[existingItemIndex].quantite += newItem.quantite || 1;
+        return updatedItems;
       }
-      return [...current, { ...newItem, quantite: 1 }];
+      
+      // New item, add to cart
+      return [...currentItems, { ...newItem, quantite: newItem.quantite || 1 }];
     });
   };
 
