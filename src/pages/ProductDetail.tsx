@@ -110,56 +110,55 @@ export default function ProductDetail() {
   return (
     <>
       <div className="container mx-auto px-4 py-4 md:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          {/* Images */}
-          <div className="order-2 lg:order-1">
-            {images.length > 0 ? (
-              <div className="space-y-4">
-                <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-                  <img
-                    src={images[currentImageIndex]?.url}
-                    alt={product.nom}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {images.length > 1 && (
-                  <div className="flex gap-2 justify-center">
-                    {images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`w-16 h-16 rounded border-2 overflow-hidden ${
-                          currentImageIndex === index ? 'border-primary' : 'border-muted'
-                        }`}
-                      >
-                        <img
-                          src={image.url}
-                          alt={`${product.nom} ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : videos.length > 0 ? (
-              <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-                <video
-                  src={videos[0].url}
-                  controls
+        {/* Images Section - Always first on mobile */}
+        <div className="mb-6 lg:mb-8">
+          {images.length > 0 ? (
+            <div className="space-y-4">
+              <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={images[currentImageIndex]?.url}
+                  alt={product.nom}
                   className="w-full h-full object-cover"
                 />
               </div>
-            ) : (
-              <div className="aspect-square flex items-center justify-center bg-muted rounded-lg">
-                <span className="text-muted-foreground">Aucune image disponible</span>
-              </div>
-            )}
-          </div>
+              {images.length > 1 && (
+                <div className="flex gap-2 justify-center overflow-x-auto pb-2">
+                  {images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded border-2 overflow-hidden ${
+                        currentImageIndex === index ? 'border-primary' : 'border-muted'
+                      }`}
+                    >
+                      <img
+                        src={image.url}
+                        alt={`${product.nom} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : videos.length > 0 ? (
+            <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 overflow-hidden rounded-lg bg-muted">
+              <video
+                src={videos[0].url}
+                controls
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 flex items-center justify-center bg-muted rounded-lg">
+              <span className="text-muted-foreground text-sm md:text-base">Aucune image disponible</span>
+            </div>
+          )}
+        </div>
 
-          {/* Informations produit */}
-          <div className="order-1 lg:order-2 space-y-4 lg:space-y-6">
-            <div>
+        {/* Product Information */}
+        <div className="space-y-4 lg:space-y-6 max-w-2xl mx-auto lg:max-w-none">
+          <div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
                 <h1 className="text-2xl md:text-3xl font-bold">{product.nom}</h1>
                 <Badge variant={product.en_stock ? "default" : "destructive"}>
@@ -263,7 +262,6 @@ export default function ProductDetail() {
                 </Button>
               )}
             </div>
-          </div>
         </div>
 
         {/* 3D Model Section - Below everything */}
