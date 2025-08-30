@@ -111,29 +111,49 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
               <div className="text-muted-foreground">Chargement du modèle 3D...</div>
             </div>
           )}
-          <Canvas 
-            camera={{ position: [0, 0, 5], fov: 50 }}
-            onCreated={() => console.log('Canvas created, loading model:', urlObj)}
-          >
-            <ambientLight intensity={0.8} />
-            <directionalLight position={[10, 10, 5]} intensity={1} />
-            <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-            <Suspense
-              fallback={
-                <mesh>
-                  <boxGeometry args={[1, 1, 1]} />
-                  <meshStandardMaterial color="gray" wireframe />
-                </mesh>
-              }
+          <div className="w-full h-full">
+            <Canvas 
+              camera={{ position: [0, 0, 5], fov: 50 }}
+              onCreated={() => console.log('Canvas created, loading model:', urlObj)}
+              style={{ 
+                width: '100%', 
+                height: '100%',
+                display: 'block'
+              }}
+              gl={{ 
+                preserveDrawingBuffer: true,
+                antialias: true
+              }}
             >
-              <Model urlObj={urlObj} onError={handleError} onLoad={handleLoad} />
-            </Suspense>
-            <OrbitControls 
-              enableZoom={true} 
-              enablePan={true} 
-              enableRotate={true}
-            />
-          </Canvas>
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[10, 10, 5]} intensity={1} />
+              <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+              <Suspense
+                fallback={
+                  <mesh>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial color="gray" wireframe />
+                  </mesh>
+                }
+              >
+                <Model urlObj={urlObj} onError={handleError} onLoad={handleLoad} />
+              </Suspense>
+              <OrbitControls 
+                enableZoom={true} 
+                enablePan={true} 
+                enableRotate={true}
+                minDistance={2}
+                maxDistance={10}
+                maxPolarAngle={Math.PI}
+                minPolarAngle={0}
+                enableDamping={true}
+                dampingFactor={0.05}
+                rotateSpeed={0.5}
+                zoomSpeed={0.5}
+                panSpeed={0.5}
+              />
+            </Canvas>
+          </div>
         </>
       )}
     </div>
