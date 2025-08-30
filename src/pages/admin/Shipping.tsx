@@ -839,6 +839,9 @@ function ZoneDialog({ zone, carriers, onSubmit, isLoading }: any) {
 
 // Tracking Tab Component
 function TrackingTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: recentShipments } = useQuery({
     queryKey: ['recent-shipments'],
     queryFn: async () => {
@@ -852,6 +855,39 @@ function TrackingTab() {
       if (error) throw error;
       return data;
     }
+  });
+
+  // Update order status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+      const statusTimestampMap = {
+        'confirmee': 'confirmed_at',
+        'en_preparation': 'packed_at', 
+        'expediee': 'shipped_at',
+        'livree': 'delivered_at',
+        'retournee': 'returned_at',
+        'annulee': 'canceled_at'
+      };
+
+      const updateData: any = { status };
+      const timestampField = statusTimestampMap[status as keyof typeof statusTimestampMap];
+      if (timestampField) {
+        updateData[timestampField] = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recent-shipments'] });
+      toast({
+        title: 'Statut mis à jour',
+        description: 'Le statut de livraison a été modifié',
+      });
+    },
   });
 
   const getShippingStatusBadge = (status: string) => {
@@ -926,7 +962,19 @@ function TrackingTab() {
                       </span>
                     </td>
                     <td className="p-4">
-                      {getShippingStatusBadge(shipment.status)}
+                      <Select
+                        value={shipment.status}
+                        onValueChange={(value) => updateStatusMutation.mutate({ orderId: shipment.id, status: value })}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="expediee">Expédiée</SelectItem>
+                          <SelectItem value="livree">Livrée</SelectItem>
+                          <SelectItem value="retournee">Retournée</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -935,10 +983,14 @@ function TrackingTab() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-3 w-3 mr-1" />
-                        Détails
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/admin/orders`}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            Voir Commande
+                          </a>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
