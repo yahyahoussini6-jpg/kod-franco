@@ -88,7 +88,7 @@ export default function AdminProducts() {
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
 
       if (uploadError) {
         console.error('Image upload error:', uploadError);
