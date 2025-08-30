@@ -14,13 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      order_items: {
+        Row: {
+          id: number
+          order_id: string
+          product_id: string | null
+          product_nom: string
+          product_prix: number
+          quantite: number
+        }
+        Insert: {
+          id?: number
+          order_id: string
+          product_id?: string | null
+          product_nom: string
+          product_prix: number
+          quantite: number
+        }
+        Update: {
+          id?: number
+          order_id?: string
+          product_id?: string | null
+          product_nom?: string
+          product_prix?: number
+          quantite?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          client_adresse: string
+          client_nom: string
+          client_phone: string
+          client_ville: string
+          code_suivi: string
+          created_at: string
+          id: string
+          statut: string
+          utm_source: string | null
+        }
+        Insert: {
+          client_adresse: string
+          client_nom: string
+          client_phone: string
+          client_ville: string
+          code_suivi?: string
+          created_at?: string
+          id?: string
+          statut?: string
+          utm_source?: string | null
+        }
+        Update: {
+          client_adresse?: string
+          client_nom?: string
+          client_phone?: string
+          client_ville?: string
+          code_suivi?: string
+          created_at?: string
+          id?: string
+          statut?: string
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string
+          description: string | null
+          en_stock: boolean
+          id: string
+          media: Json
+          nom: string
+          prix: number
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          en_stock?: boolean
+          id?: string
+          media?: Json
+          nom: string
+          prix: number
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          en_stock?: boolean
+          id?: string
+          media?: Json
+          nom?: string
+          prix?: number
+          slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_order_by_tracking: {
+        Args: { p_code: string }
+        Returns: {
+          code_suivi: string
+          created_at: string
+          items: Json
+          statut: string
+        }[]
+      }
+      make_tracking_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      place_order: {
+        Args: { p_client: Json; p_items: Json }
+        Returns: {
+          code_suivi: string
+          order_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
