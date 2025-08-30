@@ -155,9 +155,9 @@ export default function FinancePage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">234,567 MAD</div>
+            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              +12.5% vs mois dernier
+              CA des commandes livrées
             </p>
           </CardContent>
         </Card>
@@ -168,35 +168,35 @@ export default function FinancePage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156,234 MAD</div>
+            <div className="text-2xl font-bold">{stats.profit.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              66.6% de marge
+              {stats.revenue > 0 ? Math.round((stats.profit / stats.revenue) * 100) : 0}% de marge
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">COGS Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Frais COD</CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">78,333 MAD</div>
+            <div className="text-2xl font-bold">{stats.codFees.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              33.4% du CA
+              Total frais contre-remboursement
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Factures Impayées</CardTitle>
+            <CardTitle className="text-sm font-medium">En Attente</CardTitle>
             <Receipt className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">12</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.pending.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              Total: 45,600 MAD
+              Transactions en attente
             </p>
           </CardContent>
         </Card>
@@ -211,8 +211,10 @@ export default function FinancePage() {
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
               <Input 
-                placeholder="Rechercher facture, client..." 
+                placeholder="Rechercher transaction, référence..." 
                 className="w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline">
@@ -225,96 +227,81 @@ export default function FinancePage() {
             </Button>
           </div>
 
-          {/* Invoices Table */}
+          {/* Transactions Table */}
           <div className="border rounded-lg">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-4 font-medium">Facture</th>
+                    <th className="text-left p-4 font-medium">Référence</th>
+                    <th className="text-left p-4 font-medium">Type</th>
                     <th className="text-left p-4 font-medium">Client</th>
-                    <th className="text-left p-4 font-medium">Date</th>
                     <th className="text-left p-4 font-medium">Montant</th>
-                    <th className="text-left p-4 font-medium">TVA</th>
-                    <th className="text-left p-4 font-medium">Total TTC</th>
+                    <th className="text-left p-4 font-medium">Date</th>
                     <th className="text-left p-4 font-medium">Statut</th>
                     <th className="text-left p-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Sample data */}
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#FAC-2024-001</p>
-                        <p className="text-sm text-muted-foreground">Commande #ORD-12345</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Ahmed Benali</p>
-                        <p className="text-sm text-muted-foreground">Casablanca</p>
-                      </div>
-                    </td>
-                    <td className="p-4">15/08/2024</td>
-                    <td className="p-4">450.00 MAD</td>
-                    <td className="p-4">90.00 MAD</td>
-                    <td className="p-4 font-medium">540.00 MAD</td>
-                    <td className="p-4">
-                      <Badge variant="default">Payée</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#FAC-2024-002</p>
-                        <p className="text-sm text-muted-foreground">Commande #ORD-12346</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Fatima Zahra</p>
-                        <p className="text-sm text-muted-foreground">Rabat</p>
-                      </div>
-                    </td>
-                    <td className="p-4">16/08/2024</td>
-                    <td className="p-4">230.00 MAD</td>
-                    <td className="p-4">46.00 MAD</td>
-                    <td className="p-4 font-medium">276.00 MAD</td>
-                    <td className="p-4">
-                      <Badge variant="destructive">Impayée</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#FAC-2024-003</p>
-                        <p className="text-sm text-muted-foreground">Commande #ORD-12347</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Mohamed Alami</p>
-                        <p className="text-sm text-muted-foreground">Marrakech</p>
-                      </div>
-                    </td>
-                    <td className="p-4">17/08/2024</td>
-                    <td className="p-4">890.00 MAD</td>
-                    <td className="p-4">178.00 MAD</td>
-                    <td className="p-4 font-medium">1,068.00 MAD</td>
-                    <td className="p-4">
-                      <Badge variant="secondary">En attente</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
+                  {filteredTransactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                        Aucune transaction trouvée
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTransactions.map((transaction) => {
+                      const typeBadge = getTransactionTypeBadge(transaction.transaction_type);
+                      const statusBadge = getStatusBadge(transaction.status);
+
+                      return (
+                        <tr key={transaction.id} className="border-t">
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium font-mono text-sm">
+                                {transaction.reference_number || transaction.id.slice(0, 8)}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.orders?.code_suivi || 'Transaction directe'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">
+                                {transaction.customer_profiles?.full_name || 
+                                 transaction.orders?.client_nom || 'N/A'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.customer_profiles?.phone || 'N/A'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`font-medium ${
+                              transaction.transaction_type === 'refund' ? 'text-red-600' : 'text-green-600'
+                            }`}>
+                              {transaction.transaction_type === 'refund' ? '-' : '+'}{transaction.amount} MAD
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-sm">
+                              {new Date(transaction.created_at).toLocaleDateString('fr-FR')}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <Button variant="outline" size="sm">Voir</Button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

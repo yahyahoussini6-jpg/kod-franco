@@ -154,52 +154,52 @@ export default function ReturnsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taux RTO</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Retours</CardTitle>
             <RotateCcw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">12.4%</div>
+            <div className="text-2xl font-bold">{stats.totalReturns}</div>
             <p className="text-xs text-muted-foreground">
-              -2.1% vs mois dernier
+              Retours enregistrés
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Retours en Cours</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Valeur RTO</CardTitle>
+            <Truck className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">234</div>
+            <div className="text-2xl font-bold text-red-600">{stats.rtoValue.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              En attente de traitement
+              Perte RTO
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Coût RTO</CardTitle>
-            <DollarSign className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">Traités</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">45,678 MAD</div>
+            <div className="text-2xl font-bold text-green-600">{stats.processedReturns}</div>
             <p className="text-xs text-muted-foreground">
-              Ce mois
+              Retours finalisés
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Annulations</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Remboursé</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-2xl font-bold">{stats.refunded.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              Pré-expédition ce mois
+              Total remboursements
             </p>
           </CardContent>
         </Card>
@@ -216,6 +216,8 @@ export default function ReturnsPage() {
               <Input 
                 placeholder="Rechercher commande, code suivi..." 
                 className="w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline">
@@ -234,6 +236,7 @@ export default function ReturnsPage() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
+                    <th className="text-left p-4 font-medium">Code Retour</th>
                     <th className="text-left p-4 font-medium">Commande</th>
                     <th className="text-left p-4 font-medium">Client</th>
                     <th className="text-left p-4 font-medium">Type</th>
@@ -245,97 +248,83 @@ export default function ReturnsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Sample data */}
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#ORD-12345</p>
-                        <p className="text-sm text-muted-foreground">TRK-ABC123</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Ahmed Benali</p>
-                        <p className="text-sm text-muted-foreground">+212 6 12 34 56 78</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="destructive">RTO</Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm">Client injoignable</span>
-                    </td>
-                    <td className="p-4">450 MAD</td>
-                    <td className="p-4">
-                      <span className="text-sm">Hier</span>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="secondary">En transit retour</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Traiter</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#ORD-12346</p>
-                        <p className="text-sm text-muted-foreground">TRK-DEF456</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Fatima Zahra</p>
-                        <p className="text-sm text-muted-foreground">+212 6 87 65 43 21</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="outline">Annulation</Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm">Rupture de stock</span>
-                    </td>
-                    <td className="p-4">230 MAD</td>
-                    <td className="p-4">
-                      <span className="text-sm">Il y a 2h</span>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="default">En attente</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Traiter</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">#ORD-12347</p>
-                        <p className="text-sm text-muted-foreground">TRK-GHI789</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">Mohamed Alami</p>
-                        <p className="text-sm text-muted-foreground">+212 6 11 22 33 44</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="destructive">RTO</Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm">Adresse incorrecte</span>
-                    </td>
-                    <td className="p-4">890 MAD</td>
-                    <td className="p-4">
-                      <span className="text-sm">Il y a 3j</span>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="default">Reçu en entrepôt</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Traiter</Button>
-                    </td>
-                  </tr>
+                  {filteredReturns.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                        Aucun retour trouvé
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredReturns.map((returnItem) => {
+                      const statusBadge = getStatusBadge(returnItem.status);
+                      const typeBadge = getReturnTypeBadge(returnItem.return_type);
+
+                      return (
+                        <tr key={returnItem.id} className="border-t">
+                          <td className="p-4 font-mono text-sm">{returnItem.return_code}</td>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">{returnItem.orders?.code_suivi || 'N/A'}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {returnItem.orders?.client_nom || 'N/A'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">
+                                {returnItem.customer_profiles?.full_name || returnItem.orders?.client_nom || 'N/A'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {returnItem.customer_profiles?.phone || 'N/A'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-sm">{returnItem.reason_description}</span>
+                          </td>
+                          <td className="p-4">{returnItem.return_value} MAD</td>
+                          <td className="p-4">
+                            <span className="text-sm">
+                              {new Date(returnItem.created_at).toLocaleDateString('fr-FR')}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Select
+                                value={returnItem.status}
+                                onValueChange={(value) => 
+                                  updateReturnStatus.mutate({ id: returnItem.id, status: value })
+                                }
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="initiated">Initié</SelectItem>
+                                  <SelectItem value="in_transit">En Transit</SelectItem>
+                                  <SelectItem value="received">Reçu</SelectItem>
+                                  <SelectItem value="processed">Traité</SelectItem>
+                                  <SelectItem value="refunded">Remboursé</SelectItem>
+                                  <SelectItem value="restocked">Remis en Stock</SelectItem>
+                                  <SelectItem value="disposed">Éliminé</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -355,9 +344,9 @@ export default function ReturnsPage() {
                 <span>Client injoignable</span>
                 <div className="flex items-center gap-2">
                   <div className="w-32 bg-muted rounded-full h-2">
-                    <div className="bg-red-500 h-2 rounded-full" style={{width: '45%'}}></div>
+                    <div className="bg-red-500 h-2 rounded-full" style={{width: '60%'}}></div>
                   </div>
-                  <span className="text-sm font-medium">45%</span>
+                  <span className="text-sm font-medium">60%</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
@@ -373,18 +362,9 @@ export default function ReturnsPage() {
                 <span>Client refuse</span>
                 <div className="flex items-center gap-2">
                   <div className="w-32 bg-muted rounded-full h-2">
-                    <div className="bg-yellow-500 h-2 rounded-full" style={{width: '20%'}}></div>
+                    <div className="bg-yellow-500 h-2 rounded-full" style={{width: '15%'}}></div>
                   </div>
-                  <span className="text-sm font-medium">20%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Autres</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-32 bg-muted rounded-full h-2">
-                    <div className="bg-gray-500 h-2 rounded-full" style={{width: '10%'}}></div>
-                  </div>
-                  <span className="text-sm font-medium">10%</span>
+                  <span className="text-sm font-medium">15%</span>
                 </div>
               </div>
             </div>
@@ -399,20 +379,20 @@ export default function ReturnsPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span>Coût de transport</span>
-                <span className="font-medium">25,400 MAD</span>
+                <span className="font-medium">{Math.round(stats.rtoValue * 0.6).toLocaleString()} MAD</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Coût de manutention</span>
-                <span className="font-medium">8,200 MAD</span>
+                <span className="font-medium">{Math.round(stats.rtoValue * 0.2).toLocaleString()} MAD</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Produits endommagés</span>
-                <span className="font-medium">12,078 MAD</span>
+                <span className="font-medium">{Math.round(stats.rtoValue * 0.2).toLocaleString()} MAD</span>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center font-bold">
                   <span>Total</span>
-                  <span>45,678 MAD</span>
+                  <span>{stats.rtoValue.toLocaleString()} MAD</span>
                 </div>
               </div>
             </div>
