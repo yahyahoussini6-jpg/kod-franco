@@ -58,7 +58,7 @@ export default function AdminAnalytics() {
 
     // Orders by status
     const ordersByStatus = orders.reduce((acc, order) => {
-      acc[order.statut] = (acc[order.statut] || 0) + 1;
+      acc[order.status] = (acc[order.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
