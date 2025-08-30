@@ -16,28 +16,37 @@ export type Database = {
     Tables: {
       order_items: {
         Row: {
+          category: string | null
+          cogs_per_unit: number | null
           id: number
           order_id: string
           product_id: string | null
           product_nom: string
           product_prix: number
           quantite: number
+          unit_price: number | null
         }
         Insert: {
+          category?: string | null
+          cogs_per_unit?: number | null
           id?: number
           order_id: string
           product_id?: string | null
           product_nom: string
           product_prix: number
           quantite: number
+          unit_price?: number | null
         }
         Update: {
+          category?: string | null
+          cogs_per_unit?: number | null
           id?: number
           order_id?: string
           product_id?: string | null
           product_nom?: string
           product_prix?: number
           quantite?: number
+          unit_price?: number | null
         }
         Relationships: [
           {
@@ -58,36 +67,87 @@ export type Database = {
       }
       orders: {
         Row: {
+          canceled_at: string | null
+          city: string | null
           client_adresse: string
           client_nom: string
           client_phone: string
           client_ville: string
+          cod_fee: number | null
           code_suivi: string
+          cogs_total: number | null
+          confirmed_at: string | null
+          courier: string | null
           created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          discount_total: number | null
           id: string
-          statut: string
+          order_total: number
+          packed_at: string | null
+          region: string | null
+          returned_at: string | null
+          shipped_at: string | null
+          shipping_cost: number | null
+          source_channel: string | null
+          status: string | null
+          utm_campaign: string | null
           utm_source: string | null
         }
         Insert: {
+          canceled_at?: string | null
+          city?: string | null
           client_adresse: string
           client_nom: string
           client_phone: string
           client_ville: string
+          cod_fee?: number | null
           code_suivi?: string
+          cogs_total?: number | null
+          confirmed_at?: string | null
+          courier?: string | null
           created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          discount_total?: number | null
           id?: string
-          statut?: string
+          order_total?: number
+          packed_at?: string | null
+          region?: string | null
+          returned_at?: string | null
+          shipped_at?: string | null
+          shipping_cost?: number | null
+          source_channel?: string | null
+          status?: string | null
+          utm_campaign?: string | null
           utm_source?: string | null
         }
         Update: {
+          canceled_at?: string | null
+          city?: string | null
           client_adresse?: string
           client_nom?: string
           client_phone?: string
           client_ville?: string
+          cod_fee?: number | null
           code_suivi?: string
+          cogs_total?: number | null
+          confirmed_at?: string | null
+          courier?: string | null
           created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          discount_total?: number | null
           id?: string
-          statut?: string
+          order_total?: number
+          packed_at?: string | null
+          region?: string | null
+          returned_at?: string | null
+          shipped_at?: string | null
+          shipping_cost?: number | null
+          source_channel?: string | null
+          status?: string | null
+          utm_campaign?: string | null
           utm_source?: string | null
         }
         Relationships: []
@@ -158,6 +218,41 @@ export type Database = {
         }
         Relationships: []
       }
+      status_events: {
+        Row: {
+          created_at: string
+          from_status: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -181,7 +276,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_funnel_counts: {
+        Row: {
+          annulee: number | null
+          confirmee: number | null
+          d: string | null
+          en_preparation: number | null
+          expediee: number | null
+          livree: number | null
+          nouvelle: number | null
+          retournee: number | null
+        }
+        Relationships: []
+      }
+      v_overview_daily: {
+        Row: {
+          d: string | null
+          delivered_aov: number | null
+          delivered_orders: number | null
+          delivered_revenue: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_order_by_tracking: {
@@ -213,6 +329,73 @@ export type Database = {
         Returns: {
           code_suivi: string
           order_id: string
+        }[]
+      }
+      rpc_analytics_geo: {
+        Args: { filters?: Json; from_ts: string; to_ts: string }
+        Returns: {
+          city: string
+          courier: string
+          delivered_orders: number
+          delivered_revenue: number
+          delivery_rate: number
+          shipping_cost_per_delivered: number
+          transit_p90_days: number
+        }[]
+      }
+      rpc_analytics_marketing: {
+        Args: { filters?: Json; from_ts: string; to_ts: string }
+        Returns: {
+          campaign: string
+          delivered_aov: number
+          delivered_orders: number
+          delivered_rate: number
+          delivered_revenue: number
+          rto_rate: number
+          source: string
+        }[]
+      }
+      rpc_analytics_overview: {
+        Args: { filters?: Json; from_ts: string; to_ts: string }
+        Returns: {
+          attempted_gmv: number
+          cancel_rate: number
+          contribution: number
+          contribution_pct: number
+          delivered_aov: number
+          delivered_orders: number
+          delivered_revenue: number
+          delivery_rate: number
+          rto_rate: number
+        }[]
+      }
+      rpc_analytics_products: {
+        Args: { filters?: Json; from_ts: string; to_ts: string }
+        Returns: {
+          aov_contrib: number
+          cancel_rate: number
+          category: string
+          delivered_revenue: number
+          delivered_units: number
+          product_id: string
+          product_name: string
+          return_rate: number
+          sku_margin: number
+        }[]
+      }
+      rpc_analytics_sla: {
+        Args: { filters?: Json; from_ts: string; to_ts: string }
+        Returns: {
+          t_confirm_p50: number
+          t_confirm_p90: number
+          t_o2d_p50: number
+          t_o2d_p90: number
+          t_pack_p50: number
+          t_pack_p90: number
+          t_ship_p50: number
+          t_ship_p90: number
+          t_transit_p50: number
+          t_transit_p90: number
         }[]
       }
     }

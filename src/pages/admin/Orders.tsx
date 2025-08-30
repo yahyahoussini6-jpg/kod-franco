@@ -14,23 +14,23 @@ import { OrderStatus } from '@/theme/tokens';
 
 // Map old status format to new format
 const statusMapping: Record<string, OrderStatus> = {
-  'NOUVELLE': 'nouvelle',
-  'CONFIRMÉE': 'confirmee',
-  'EN_PRÉPARATION': 'en_preparation',
-  'EXPÉDIÉE': 'expediee',
-  'LIVRÉE': 'livree',
-  'ANNULÉE': 'annulee',
-  'RETOURNÉE': 'retournee',
+  'nouvelle': 'nouvelle',
+  'confirmee': 'confirmee',
+  'en_preparation': 'en_preparation',
+  'expediee': 'expediee',
+  'livree': 'livree',
+  'annulee': 'annulee',
+  'retournee': 'retournee',
 };
 
 const statusLabels = {
-  'NOUVELLE': 'Nouvelle',
-  'CONFIRMÉE': 'Confirmée',
-  'EN_PRÉPARATION': 'En préparation', 
-  'EXPÉDIÉE': 'Expédiée',
-  'LIVRÉE': 'Livrée',
-  'ANNULÉE': 'Annulée',
-  'RETOURNÉE': 'Retournée',
+  'nouvelle': 'Nouvelle',
+  'confirmee': 'Confirmée',
+  'en_preparation': 'En préparation', 
+  'expediee': 'Expédiée',
+  'livree': 'Livrée',
+  'annulee': 'Annulée',
+  'retournee': 'Retournée',
 };
 
 export default function AdminOrders() {
@@ -62,7 +62,7 @@ export default function AdminOrders() {
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       const { error } = await supabase
         .from('orders')
-        .update({ statut: status })
+        .update({ status: status })
         .eq('id', orderId);
       if (error) throw error;
     },
@@ -133,7 +133,7 @@ export default function AdminOrders() {
                       {formatPrice(getOrderTotal(order))}
                     </span>
                     <OrderStatusBadge 
-                      status={statusMapping[order.statut] || 'nouvelle'} 
+                      status={(order.status as OrderStatus) || 'nouvelle'}
                     />
                   </div>
                 </div>
@@ -173,7 +173,7 @@ export default function AdminOrders() {
                   </Button>
                   
                   <Select
-                    value={order.statut}
+                    value={order.status}
                     onValueChange={(value) => handleStatusChange(order.id, value)}
                   >
                     <SelectTrigger className="w-[180px]">
@@ -233,7 +233,7 @@ export default function AdminOrders() {
                     <p className="flex items-center gap-2">
                       <strong>Statut:</strong> 
                       <OrderStatusBadge 
-                        status={statusMapping[selectedOrder.statut] || 'nouvelle'} 
+                        status={(selectedOrder.status as OrderStatus) || 'nouvelle'} 
                       />
                     </p>
                     <p><strong>Total:</strong> {formatPrice(getOrderTotal(selectedOrder))}</p>
