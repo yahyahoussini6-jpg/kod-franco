@@ -208,7 +208,7 @@ const ReturnPolicy = () => {
               <div className="text-sm">
                 <p className="font-semibold">Service Client</p>
                 <p className="text-muted-foreground">+212 6 12 34 56 78</p>
-                <p className="text-muted-foreground">contact@boutique.ma</p>
+                <p className="text-muted-foreground">contact@felids.ma</p>
               </div>
               <div className="text-sm">
                 <p className="font-semibold">Horaires</p>

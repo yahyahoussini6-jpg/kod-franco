@@ -33,7 +33,7 @@ const TermsOfService = () => {
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
                 Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation 
-                du site web <strong>boutique.ma</strong> exploité par notre société.
+                du site web <strong>felids.ma</strong> exploité par notre société.
               </p>
               <p className="text-muted-foreground">
                 En accédant à notre site ou en passant une commande, vous acceptez d'être lié par ces 
@@ -57,7 +57,7 @@ const TermsOfService = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Dénomination Sociale</h4>
-                  <p className="text-muted-foreground text-sm">Boutique SARL</p>
+                  <p className="text-muted-foreground text-sm">Felids SARL</p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Registre du Commerce</h4>
@@ -276,7 +276,7 @@ const TermsOfService = () => {
                 Pour toute question concernant ces conditions :
               </p>
               <p className="text-sm">
-                <strong>Email :</strong> legal@boutique.ma<br />
+                <strong>Email :</strong> legal@felids.ma<br />
                 <strong>Tél :</strong> +212 6 12 34 56 78
               </p>
             </CardContent>

@@ -9,7 +9,7 @@ const Index = () => {
       <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-12 md:py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6">
-            Boutique en ligne
+            Felids - Boutique en ligne
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto px-4">
             Découvrez notre collection unique de produits avec visualisation 3D. 

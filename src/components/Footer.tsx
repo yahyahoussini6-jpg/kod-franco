@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-6 w-6 text-primary" />
-              <h3 className="text-xl font-bold text-primary">Boutique</h3>
+              <h3 className="text-xl font-bold text-primary">Felids</h3>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Votre destination pour des produits de qualité. Nous nous engageons à vous offrir 
@@ -81,7 +81,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">contact@boutique.ma</span>
+                <span className="text-sm text-muted-foreground">contact@felids.ma</span>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
@@ -98,7 +98,7 @@ export default function Footer() {
         <div className="border-t mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 Boutique. Tous droits réservés.
+              © 2024 Felids. Tous droits réservés.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">

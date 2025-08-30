@@ -250,7 +250,7 @@ const Shipping = () => {
               <div className="text-sm">
                 <p className="font-semibold">Questions sur votre livraison ?</p>
                 <p className="text-muted-foreground">+212 6 12 34 56 78</p>
-                <p className="text-muted-foreground">livraison@boutique.ma</p>
+                <p className="text-muted-foreground">livraison@felids.ma</p>
               </div>
               <a 
                 href="https://wa.me/+212612345678" 

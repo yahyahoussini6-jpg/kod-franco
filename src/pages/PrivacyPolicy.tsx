@@ -37,7 +37,7 @@ const PrivacyPolicy = () => {
               <p className="text-muted-foreground">
                 Cette Politique de Confidentialité décrit nos pratiques concernant la collecte, 
                 l'utilisation, le stockage et la protection de vos données personnelles lorsque vous 
-                utilisez notre site web <strong>boutique.ma</strong>.
+                utilisez notre site web <strong>felids.ma</strong>.
               </p>
               <p className="text-muted-foreground">
                 En utilisant notre site, vous consentez aux pratiques décrites dans cette politique. 
@@ -249,7 +249,7 @@ const PrivacyPolicy = () => {
               <div className="mt-4">
                 <h4 className="font-semibold mb-2">Comment Exercer vos Droits ?</h4>
                 <p className="text-muted-foreground text-sm">
-                  Contactez-nous à <strong>privacy@boutique.ma</strong> ou par courrier postal. 
+                  Contactez-nous à <strong>privacy@felids.ma</strong> ou par courrier postal. 
                   Nous répondrons dans un délai maximum de 30 jours.
                 </p>
               </div>
@@ -316,7 +316,7 @@ const PrivacyPolicy = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-sm">
-                <strong>Email :</strong> privacy@boutique.ma<br />
+                <strong>Email :</strong> privacy@felids.ma<br />
                 <strong>Adresse :</strong> Délégué à la Protection des Données<br />
                 123 Avenue Mohammed V<br />
                 Casablanca 20000, Maroc

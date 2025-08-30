@@ -107,7 +107,7 @@ const Contact = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">contact@boutique.com</p>
+              <p className="text-muted-foreground">contact@felids.ma</p>
               <p className="text-sm text-muted-foreground mt-1">Réponse sous 24h</p>
             </CardContent>
           </Card>
