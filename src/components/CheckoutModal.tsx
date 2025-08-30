@@ -13,10 +13,21 @@ import { formatPrice } from '@/lib/format';
 import type { CartItem } from '@/context/CartContext';
 
 const checkoutSchema = z.object({
-  nom: z.string().min(1, 'Ce champ est obligatoire'),
-  phone: z.string().min(1, 'Ce champ est obligatoire'),
-  ville: z.string().min(1, 'Ce champ est obligatoire'),
-  adresse: z.string().min(1, 'Ce champ est obligatoire'),
+  nom: z.string()
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(50, 'Le nom ne peut pas dépasser 50 caractères')
+    .regex(/^[a-zA-ZÀ-ÿ\s-']+$/, 'Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+  phone: z.string()
+    .min(10, 'Le numéro de téléphone doit contenir au moins 10 chiffres')
+    .max(15, 'Le numéro de téléphone ne peut pas dépasser 15 chiffres')
+    .regex(/^[\d\s\-\+\(\)]+$/, 'Format de téléphone invalide'),
+  ville: z.string()
+    .min(2, 'La ville doit contenir au moins 2 caractères')
+    .max(30, 'Le nom de la ville ne peut pas dépasser 30 caractères')
+    .regex(/^[a-zA-ZÀ-ÿ\s-']+$/, 'Le nom de ville ne peut contenir que des lettres, espaces, tirets et apostrophes'),
+  adresse: z.string()
+    .min(10, 'L\'adresse doit contenir au moins 10 caractères')
+    .max(200, 'L\'adresse ne peut pas dépasser 200 caractères'),
 });
 
 type CheckoutForm = z.infer<typeof checkoutSchema>;
@@ -116,7 +127,11 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
                 <FormItem>
                   <FormLabel>Téléphone</FormLabel>
                   <FormControl>
-                    <Input {...field} type="tel" />
+                    <Input 
+                      {...field} 
+                      type="tel" 
+                      placeholder="0612345678"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,7 +145,10 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
                 <FormItem>
                   <FormLabel>Ville</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input 
+                      {...field} 
+                      placeholder="Casablanca"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +162,10 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
                 <FormItem>
                   <FormLabel>Adresse complète</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input 
+                      {...field} 
+                      placeholder="123 Avenue Mohammed V, Quartier..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

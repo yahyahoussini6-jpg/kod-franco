@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ProductCard } from '@/components/ProductCard';
@@ -10,42 +10,75 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Search, Filter } from 'lucide-react';
 
 const PRODUCTS_PER_PAGE = 12;
 
 export default function Products() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priceRange, setPriceRange] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
   
-  const { data: productsData, isLoading, error } = useQuery({
-    queryKey: ['products', currentPage],
+  const { data: allProductsData, isLoading, error } = useQuery({
+    queryKey: ['products'],
     queryFn: async () => {
-      const from = (currentPage - 1) * PRODUCTS_PER_PAGE;
-      const to = from + PRODUCTS_PER_PAGE - 1;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      const [productsResponse, countResponse] = await Promise.all([
-        supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .range(from, to),
-        supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-      ]);
-      
-      if (productsResponse.error) throw productsResponse.error;
-      if (countResponse.error) throw countResponse.error;
-      
-      return {
-        products: productsResponse.data,
-        totalCount: countResponse.count || 0
-      };
+      if (error) throw error;
+      return data;
     },
   });
 
-  const products = productsData?.products || [];
-  const totalCount = productsData?.totalCount || 0;
+
+  // Filter and search products
+  const filteredProducts = useMemo(() => {
+    if (!allProductsData) return [];
+    
+    return allProductsData.filter(product => {
+      // Search filter
+      const matchesSearch = !searchTerm || 
+        product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Price range filter
+      let matchesPrice = true;
+      if (priceRange === 'under-100') matchesPrice = product.prix < 100;
+      else if (priceRange === '100-500') matchesPrice = product.prix >= 100 && product.prix <= 500;
+      else if (priceRange === 'over-500') matchesPrice = product.prix > 500;
+      
+      // Stock filter
+      const matchesStock = stockFilter === 'all' || 
+        (stockFilter === 'in-stock' && product.en_stock) ||
+        (stockFilter === 'out-of-stock' && !product.en_stock);
+      
+      return matchesSearch && matchesPrice && matchesStock;
+    });
+  }, [allProductsData, searchTerm, priceRange, stockFilter]);
+
+  // Pagination for filtered products
+  const totalCount = filteredProducts.length;
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const products = filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, priceRange, stockFilter]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setPriceRange('all');
+    setStockFilter('all');
+  };
+
 
   if (isLoading) {
     return (
@@ -75,6 +108,61 @@ export default function Products() {
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Nos Produits</h1>
+      
+      {/* Search and Filters */}
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Rechercher des produits..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={clearFilters}
+            className="sm:w-auto"
+            disabled={!searchTerm && priceRange === 'all' && stockFilter === 'all'}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Effacer les filtres
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select value={priceRange} onValueChange={setPriceRange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Prix" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les prix</SelectItem>
+              <SelectItem value="under-100">Moins de 100 DH</SelectItem>
+              <SelectItem value="100-500">100 - 500 DH</SelectItem>
+              <SelectItem value="over-500">Plus de 500 DH</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={stockFilter} onValueChange={setStockFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Disponibilité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les produits</SelectItem>
+              <SelectItem value="in-stock">En stock</SelectItem>
+              <SelectItem value="out-of-stock">Rupture de stock</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground">
+          {totalCount} produit{totalCount > 1 ? 's' : ''} trouvé{totalCount > 1 ? 's' : ''}
+          {searchTerm && ` pour "${searchTerm}"`}
+        </div>
+      </div>
       
       {products && products.length > 0 ? (
         <>
