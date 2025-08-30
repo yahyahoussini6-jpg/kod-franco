@@ -1,115 +1,183 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, ShoppingCart, TrendingUp, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { formatPrice } from '@/lib/format';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { analyticsClient, AnalyticsFilters as IAnalyticsFilters } from '@/integrations/supabase/analytics';
+import { formatPrice, formatPercentage } from '@/lib/format';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Clock, 
+  MapPin, 
+  Package, 
+  DollarSign, 
+  Target,
+  ShoppingCart
+} from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+interface KpiCardProps {
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  trend?: { value: number; direction: 'up' | 'down' };
+}
+
+function KpiCard({ title, value, subtitle, icon: Icon, trend }: KpiCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        )}
+        {trend && (
+          <div className={`flex items-center text-xs mt-1 ${
+            trend.direction === 'up' ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {trend.direction === 'up' ? (
+              <TrendingUp className="h-3 w-3 mr-1" />
+            ) : (
+              <TrendingDown className="h-3 w-3 mr-1" />
+            )}
+            {Math.abs(trend.value).toFixed(1)}%
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface SimpleDataTableProps {
+  data: any[];
+  columns: Array<{
+    key: string;
+    label: string;
+    formatter?: (value: any) => string;
+  }>;
+}
+
+function SimpleDataTable({ data, columns }: SimpleDataTableProps) {
+  if (!data.length) {
+    return <div className="text-center text-muted-foreground py-4">No data available</div>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b">
+            {columns.map((column) => (
+              <th key={column.key} className="text-left p-2 font-medium">
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.slice(0, 10).map((row, index) => (
+            <tr key={index} className="border-b hover:bg-muted/50">
+              {columns.map((column) => (
+                <td key={column.key} className="p-2">
+                  {column.formatter 
+                    ? column.formatter(row[column.key]) 
+                    : row[column.key] || '--'
+                  }
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function AdminAnalytics() {
-  // Fetch orders for analytics
-  const { data: orders } = useQuery({
-    queryKey: ['admin-analytics'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            product_prix,
-            quantite
-          )
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
+  const [dateRange, setDateRange] = React.useState({
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+    to: new Date()
+  });
+  
+  const [filters, setFilters] = React.useState<IAnalyticsFilters>({});
+
+  // Fetch overview metrics
+  const { data: overview, isLoading: overviewLoading } = useQuery({
+    queryKey: ['analytics-overview', dateRange, filters],
+    queryFn: () => analyticsClient.getOverview(dateRange.from, dateRange.to, filters),
   });
 
-  // Fetch products count
-  const { data: productsCount } = useQuery({
-    queryKey: ['products-count'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-      
-      if (error) throw error;
-      return count || 0;
-    },
+  // Fetch SLA metrics
+  const { data: sla, isLoading: slaLoading } = useQuery({
+    queryKey: ['analytics-sla', dateRange, filters],
+    queryFn: () => analyticsClient.getSLA(dateRange.from, dateRange.to, filters),
   });
 
-  // Calculate analytics
-  const analytics = React.useMemo(() => {
-    if (!orders) return null;
+  // Fetch funnel data
+  const { data: funnelData, isLoading: funnelLoading } = useQuery({
+    queryKey: ['analytics-funnel', dateRange],
+    queryFn: () => analyticsClient.getFunnelCounts(dateRange.from, dateRange.to),
+  });
 
-    const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => {
-      const orderTotal = order.order_items?.reduce((itemSum: number, item: any) => 
-        itemSum + (item.product_prix * item.quantite), 0
-      ) || 0;
-      return sum + orderTotal;
-    }, 0);
+  // Fetch daily trends
+  const { data: dailyTrends, isLoading: trendsLoading } = useQuery({
+    queryKey: ['analytics-daily', dateRange],
+    queryFn: () => analyticsClient.getDailyOverview(dateRange.from, dateRange.to),
+  });
 
-    const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  // Fetch geo data
+  const { data: geoData, isLoading: geoLoading } = useQuery({
+    queryKey: ['analytics-geo', dateRange, filters],
+    queryFn: () => analyticsClient.getGeo(dateRange.from, dateRange.to, filters),
+  });
 
-    // Orders by status
-    const ordersByStatus = orders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  // Fetch product data
+  const { data: productData, isLoading: productLoading } = useQuery({
+    queryKey: ['analytics-products', dateRange, filters],
+    queryFn: () => analyticsClient.getProducts(dateRange.from, dateRange.to, filters),
+  });
 
-    const statusData = Object.entries(ordersByStatus).map(([status, count]) => ({
-      name: status,
-      value: count,
-    }));
+  // Fetch marketing data
+  const { data: marketingData, isLoading: marketingLoading } = useQuery({
+    queryKey: ['analytics-marketing', dateRange, filters],
+    queryFn: () => analyticsClient.getMarketing(dateRange.from, dateRange.to, filters),
+  });
 
-    // Orders by day (last 7 days)
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
+  // Fetch aged shipments
+  const { data: agedShipments, isLoading: agedLoading } = useQuery({
+    queryKey: ['analytics-aged'],
+    queryFn: () => analyticsClient.getAgedShipments(7),
+  });
 
-    const ordersByDay = last7Days.map(date => {
-      const dayOrders = orders.filter(order => 
-        order.created_at.split('T')[0] === date
-      );
-      const dayRevenue = dayOrders.reduce((sum, order) => {
-        const orderTotal = order.order_items?.reduce((itemSum: number, item: any) => 
-          itemSum + (item.product_prix * item.quantite), 0
-        ) || 0;
-        return sum + orderTotal;
-      }, 0);
+  const isLoading = overviewLoading || slaLoading || funnelLoading || trendsLoading;
 
-      return {
-        date: new Date(date).toLocaleDateString('fr-FR', { 
-          day: '2-digit', 
-          month: '2-digit' 
-        }),
-        orders: dayOrders.length,
-        revenue: dayRevenue,
-      };
-    });
+  // Prepare funnel chart data
+  const funnelChartData = React.useMemo(() => {
+    if (!funnelData || funnelData.length === 0) return [];
+    
+    const latest = funnelData[funnelData.length - 1];
+    return [
+      { stage: 'Nouvelle', count: latest.nouvelle || 0, color: '#8884d8' },
+      { stage: 'Confirmée', count: latest.confirmee || 0, color: '#82ca9d' },
+      { stage: 'En préparation', count: latest.en_preparation || 0, color: '#ffc658' },
+      { stage: 'Expédiée', count: latest.expediee || 0, color: '#ff7300' },
+      { stage: 'Livrée', count: latest.livree || 0, color: '#00ff00' },
+      { stage: 'Annulée', count: latest.annulee || 0, color: '#ff0000' },
+      { stage: 'Retournée', count: latest.retournee || 0, color: '#ff69b4' }
+    ];
+  }, [funnelData]);
 
-    return {
-      totalOrders,
-      totalRevenue,
-      averageOrder,
-      statusData,
-      ordersByDay,
-    };
-  }, [orders]);
-
-  if (!analytics) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Analytics</h1>
+      <div className="space-y-6 p-6">
+        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-4">
                 <div className="h-4 bg-muted rounded mb-2" />
@@ -123,123 +191,281 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Analytics</h1>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Commandes</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalOrders}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chiffre d'affaires</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(analytics.totalRevenue)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Panier Moyen</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(analytics.averageOrder)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produits</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{productsCount}</div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Orders by Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Commandes par Statut</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={analytics.statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {analytics.statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="funnel">Funnel</TabsTrigger>
+          <TabsTrigger value="sla">SLA & Speed</TabsTrigger>
+          <TabsTrigger value="geo">Geography</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="marketing">Marketing</TabsTrigger>
+        </TabsList>
 
-        {/* Daily Orders */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Commandes par Jour (7 derniers jours)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.ordersByDay}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="orders" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Executive KPIs Row 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              title="Delivered Revenue"
+              value={formatPrice(overview?.delivered_revenue || 0)}
+              icon={DollarSign}
+              subtitle="MTD"
+            />
+            <KpiCard
+              title="Delivered Orders"
+              value={overview?.delivered_orders?.toString() || '0'}
+              icon={Package}
+            />
+            <KpiCard
+              title="AOV (Delivered)"
+              value={formatPrice(overview?.delivered_aov || 0)}
+              icon={TrendingUp}
+            />
+            <KpiCard
+              title="Contribution"
+              value={formatPrice(overview?.contribution || 0)}
+              icon={Target}
+              subtitle={formatPercentage(overview?.contribution_pct || 0)}
+            />
+          </div>
 
-      {/* Revenue Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Évolution du Chiffre d'Affaires</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics.ordersByDay}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip formatter={(value) => formatPrice(Number(value))} />
-              <Line 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#8884d8" 
-                strokeWidth={2}
+          {/* Executive KPIs Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              title="Delivery Rate"
+              value={formatPercentage(overview?.delivery_rate || 0)}
+              icon={TrendingUp}
+              subtitle="Post-ship"
+            />
+            <KpiCard
+              title="RTO Rate"
+              value={formatPercentage(overview?.rto_rate || 0)}
+              icon={TrendingDown}
+            />
+            <KpiCard
+              title="Cancel Rate"
+              value={formatPercentage(overview?.cancel_rate || 0)}
+              icon={TrendingDown}
+              subtitle="Pre-ship"
+            />
+            <KpiCard
+              title="Attempted GMV"
+              value={formatPrice(overview?.attempted_gmv || 0)}
+              icon={DollarSign}
+            />
+          </div>
+
+          {/* Trend Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Daily Revenue Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={dailyTrends || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="d" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [formatPrice(Number(value)), 'Revenue']} />
+                    <Line type="monotone" dataKey="delivered_revenue" stroke="#8884d8" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Daily Orders Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={dailyTrends || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="d" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="delivered_orders" stroke="#82ca9d" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="funnel" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Funnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={funnelChartData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="stage" type="category" />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          
+          {/* Conversion Rates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              title="Confirmation Rate"
+              value="--"
+              icon={TrendingUp}
+              subtitle="Confirmée ÷ Nouvelle"
+            />
+            <KpiCard
+              title="Pack Rate"
+              value="--"
+              icon={Package}
+              subtitle="En préparation ÷ Confirmée"
+            />
+            <KpiCard
+              title="Ship Rate"
+              value="--"
+              icon={TrendingUp}
+              subtitle="Expédiée ÷ En préparation"
+            />
+            <KpiCard
+              title="Overall Delivered"
+              value="--"
+              icon={Target}
+              subtitle="Livrée ÷ Nouvelle"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sla" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <KpiCard
+              title="Time to Confirm"
+              value={`${(sla?.t_confirm_p50 || 0).toFixed(1)}h`}
+              subtitle={`P90: ${(sla?.t_confirm_p90 || 0).toFixed(1)}h`}
+              icon={Clock}
+            />
+            <KpiCard
+              title="Time to Pack"
+              value={`${(sla?.t_pack_p50 || 0).toFixed(1)}h`}
+              subtitle={`P90: ${(sla?.t_pack_p90 || 0).toFixed(1)}h`}
+              icon={Package}
+            />
+            <KpiCard
+              title="Time to Ship"
+              value={`${(sla?.t_ship_p50 || 0).toFixed(1)}h`}
+              subtitle={`P90: ${(sla?.t_ship_p90 || 0).toFixed(1)}h`}
+              icon={TrendingUp}
+            />
+            <KpiCard
+              title="Transit Time"
+              value={`${(sla?.t_transit_p50 || 0).toFixed(1)}d`}
+              subtitle={`P90: ${(sla?.t_transit_p90 || 0).toFixed(1)}d`}
+              icon={MapPin}
+            />
+            <KpiCard
+              title="Order-to-Delivery"
+              value={`${(sla?.t_o2d_p50 || 0).toFixed(1)}d`}
+              subtitle={`P90: ${(sla?.t_o2d_p90 || 0).toFixed(1)}d`}
+              icon={Target}
+            />
+          </div>
+
+          {/* Aged Shipments */}
+          {agedShipments && agedShipments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Aged Shipments (&gt;7 days in transit)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SimpleDataTable
+                  data={agedShipments}
+                  columns={[
+                    { key: 'code_suivi', label: 'Tracking Code' },
+                    { key: 'city', label: 'City' },
+                    { key: 'courier', label: 'Courier' },
+                    { key: 'days_in_transit', label: 'Days in Transit' },
+                    { key: 'order_total', label: 'Order Total', formatter: formatPrice },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="geo" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance by City & Courier</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SimpleDataTable
+                data={geoData || []}
+                columns={[
+                  { key: 'city', label: 'City' },
+                  { key: 'courier', label: 'Courier' },
+                  { key: 'delivered_orders', label: 'Delivered Orders' },
+                  { key: 'delivered_revenue', label: 'Delivered Revenue', formatter: formatPrice },
+                  { key: 'delivery_rate', label: 'Delivery Rate', formatter: formatPercentage },
+                  { key: 'transit_p90_days', label: 'Transit P90 (days)' },
+                  { key: 'shipping_cost_per_delivered', label: 'Shipping Cost/Order', formatter: formatPrice },
+                ]}
               />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SimpleDataTable
+                data={productData || []}
+                columns={[
+                  { key: 'product_name', label: 'Product' },
+                  { key: 'category', label: 'Category' },
+                  { key: 'delivered_units', label: 'Delivered Units' },
+                  { key: 'delivered_revenue', label: 'Delivered Revenue', formatter: formatPrice },
+                  { key: 'sku_margin', label: 'SKU Margin', formatter: formatPrice },
+                  { key: 'return_rate', label: 'Return Rate', formatter: formatPercentage },
+                  { key: 'cancel_rate', label: 'Cancel Rate', formatter: formatPercentage },
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="marketing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Marketing Source Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SimpleDataTable
+                data={marketingData || []}
+                columns={[
+                  { key: 'source', label: 'Source' },
+                  { key: 'campaign', label: 'Campaign' },
+                  { key: 'delivered_orders', label: 'Delivered Orders' },
+                  { key: 'delivered_revenue', label: 'Delivered Revenue', formatter: formatPrice },
+                  { key: 'delivered_aov', label: 'Delivered AOV', formatter: formatPrice },
+                  { key: 'delivered_rate', label: 'Delivered Rate', formatter: formatPercentage },
+                  { key: 'rto_rate', label: 'RTO Rate', formatter: formatPercentage },
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
