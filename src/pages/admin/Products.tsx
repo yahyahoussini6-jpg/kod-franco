@@ -396,7 +396,7 @@ export default function AdminProducts() {
                       <div className="flex items-center gap-2">
                         <Input
                           type="file"
-                          accept="image/*"
+                          accept="image/png,image/jpeg,image/jpg,image/webp"
                           multiple
                           onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
                           className="flex-1"
