@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { CartProvider, useCart } from "@/context/CartContext";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -201,6 +202,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
+              <Footer />
             </div>
           </BrowserRouter>
         </CartProvider>
