@@ -422,6 +422,7 @@ export type Database = {
           product_prix: number
           quantite: number
           unit_price: number | null
+          variables: Json | null
         }
         Insert: {
           category?: string | null
@@ -433,6 +434,7 @@ export type Database = {
           product_prix: number
           quantite: number
           unit_price?: number | null
+          variables?: Json | null
         }
         Update: {
           category?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           product_prix?: number
           quantite?: number
           unit_price?: number | null
+          variables?: Json | null
         }
         Relationships: [
           {

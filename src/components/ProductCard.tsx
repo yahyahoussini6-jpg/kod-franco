@@ -12,6 +12,7 @@ interface Product {
   prix: number;
   en_stock: boolean;
   media: any;
+  model_url?: string;
 }
 
 interface ProductCardProps {
@@ -21,11 +22,12 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const media = Array.isArray(product.media) ? product.media as Array<{type: string, url: string}> : [];
   const imageMedia = media.find(m => m.type === 'image');
+  const hasModel3D = product.model_url;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <Link to={`/produit/${product.slug}`}>
-        <div className="aspect-square overflow-hidden bg-muted">
+        <div className="aspect-square overflow-hidden bg-muted relative">
           {imageMedia ? (
             <img
               src={imageMedia.url}
@@ -34,7 +36,11 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              Aucune image
+              <div className="text-center">
+                <div className="text-xs mb-1">
+                  {hasModel3D ? "Modèle 3D disponible" : "Aucune image"}
+                </div>
+              </div>
             </div>
           )}
         </div>
