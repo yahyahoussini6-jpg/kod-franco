@@ -91,17 +91,17 @@ export default function ProductDetail() {
   }
 
   const media = Array.isArray(product.media) ? product.media as Array<{type: string, url: string}> : [];
-  const model3D = media.find(m => m.type === 'model3d');
   const images = media.filter(m => m.type === 'image');
   const videos = media.filter(m => m.type === 'video');
+  const hasModel3D = product.model_url;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Media */}
         <div>
-          {model3D ? (
-            <ModelViewer3D urlObj={model3D.url} />
+          {hasModel3D ? (
+            <ModelViewer3D urlObj={product.model_url} />
           ) : images.length > 0 ? (
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
               <img
