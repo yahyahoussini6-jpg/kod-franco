@@ -66,8 +66,31 @@ export default function ProductDetail() {
   const handleWhatsApp = () => {
     if (!product || !WHATSAPP_NUMBER) return;
     
-    const message = `Bonjour, je suis intéressé(e) par le produit "${product.nom}" au prix de ${formatPrice(product.prix)}. Quantité: 1. Lien: ${window.location.href}`;
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    // Build detailed product information
+    let productDetails = `🛍️ *${product.nom}*\n`;
+    productDetails += `💰 Prix: *${formatPrice(product.prix)}*\n`;
+    productDetails += `📦 Quantité: 1\n`;
+    
+    // Add selected options if any
+    if (selectedColor) {
+      productDetails += `🎨 Couleur: ${selectedColor}\n`;
+    }
+    if (selectedSize) {
+      productDetails += `📏 Taille: ${selectedSize}\n`;
+    }
+    
+    // Add product description if available
+    if (product.description) {
+      const shortDescription = product.description.length > 100 
+        ? product.description.substring(0, 100) + "..."
+        : product.description;
+      productDetails += `📋 Description: ${shortDescription}\n`;
+    }
+    
+    productDetails += `🔗 Lien produit: ${window.location.href}\n\n`;
+    productDetails += `Bonjour ! Je suis intéressé(e) par ce produit. Pouvez-vous me donner plus d'informations sur la disponibilité et les modalités de commande ? Merci ! 😊`;
+    
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(productDetails)}`;
     window.open(url, '_blank');
   };
 
