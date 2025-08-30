@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   RotateCcw, 
   Truck, 
@@ -24,6 +26,9 @@ import {
 
 export default function ReturnsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedReturn, setSelectedReturn] = useState<any>(null);
+  const [showReturnDetails, setShowReturnDetails] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch returns data
@@ -71,6 +76,17 @@ export default function ReturnsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-returns'] });
+      toast({
+        title: 'Statut mis à jour',
+        description: 'Le statut du retour a été modifié avec succès',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le statut',
+        variant: 'destructive',
+      });
     }
   });
 
@@ -106,6 +122,62 @@ export default function ReturnsPage() {
     return typeMap[type as keyof typeof typeMap] || { label: type, variant: 'secondary' as const };
   };
 
+  const handleExport = () => {
+    if (!returns || returns.length === 0) {
+      toast({
+        title: 'Aucune donnée à exporter',
+        description: 'La liste des retours est vide',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const csvData = returns.map(returnItem => ({
+      'Code retour': returnItem.return_code,
+      'Code commande': returnItem.orders?.code_suivi || '',
+      'Client': returnItem.customer_profiles?.full_name || returnItem.orders?.client_nom || '',
+      'Téléphone': returnItem.customer_profiles?.phone || '',
+      'Type': returnItem.return_type,
+      'Raison': returnItem.reason_description || '',
+      'Valeur': returnItem.return_value,
+      'Montant remboursé': returnItem.refund_amount || 0,
+      'Statut': returnItem.status,
+      'Date création': new Date(returnItem.created_at).toLocaleDateString('fr-FR'),
+      'Date traitement': returnItem.processed_at ? 
+        new Date(returnItem.processed_at).toLocaleDateString('fr-FR') : ''
+    }));
+    
+    const headers = Object.keys(csvData[0]);
+    const csv = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `retours_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Export réussi',
+      description: 'Les données de retours ont été exportées en CSV',
+    });
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-returns'] });
+    toast({
+      title: 'Données actualisées',
+      description: 'La liste des retours a été mise à jour',
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -139,11 +211,11 @@ export default function ReturnsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Actualiser
           </Button>
@@ -220,13 +292,19 @@ export default function ReturnsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Apply search filter
+              setSearchTerm(searchTerm);
+            }}>
               <Search className="mr-2 h-4 w-4" />
               Rechercher
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Clear all filters
+              setSearchTerm('');
+            }}>
               <Filter className="mr-2 h-4 w-4" />
-              Filtres
+              Effacer filtres
             </Button>
           </div>
 
@@ -315,10 +393,17 @@ export default function ReturnsPage() {
                                   <SelectItem value="restocked">Remis en Stock</SelectItem>
                                   <SelectItem value="disposed">Éliminé</SelectItem>
                                 </SelectContent>
-                              </Select>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-3 w-3" />
-                              </Button>
+                               </Select>
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => {
+                                   setSelectedReturn(returnItem);
+                                   setShowReturnDetails(true);
+                                 }}
+                               >
+                                 <Eye className="h-3 w-3" />
+                               </Button>
                             </div>
                           </td>
                         </tr>
@@ -431,6 +516,79 @@ export default function ReturnsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Return Details Dialog */}
+      <Dialog open={showReturnDetails} onOpenChange={setShowReturnDetails}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Détails du retour - {selectedReturn?.return_code}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedReturn && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-3">Informations du retour</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Code retour:</strong> {selectedReturn.return_code}</p>
+                    <p><strong>Type:</strong> 
+                      <Badge variant={getReturnTypeBadge(selectedReturn.return_type).variant} className="ml-2">
+                        {getReturnTypeBadge(selectedReturn.return_type).label}
+                      </Badge>
+                    </p>
+                    <p><strong>Statut:</strong> 
+                      <Badge variant={getStatusBadge(selectedReturn.status).variant} className="ml-2">
+                        {getStatusBadge(selectedReturn.status).label}
+                      </Badge>
+                    </p>
+                    <p><strong>Valeur retour:</strong> {selectedReturn.return_value} MAD</p>
+                    <p><strong>Montant remboursé:</strong> {selectedReturn.refund_amount || 0} MAD</p>
+                    <p><strong>Date création:</strong> {new Date(selectedReturn.created_at).toLocaleDateString('fr-FR')}</p>
+                    {selectedReturn.processed_at && (
+                      <p><strong>Date traitement:</strong> {new Date(selectedReturn.processed_at).toLocaleDateString('fr-FR')}</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-3">Commande & Client</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Code suivi:</strong> {selectedReturn.orders?.code_suivi || 'N/A'}</p>
+                    <p><strong>Client:</strong> {selectedReturn.customer_profiles?.full_name || selectedReturn.orders?.client_nom || 'N/A'}</p>
+                    <p><strong>Téléphone:</strong> {selectedReturn.customer_profiles?.phone || 'N/A'}</p>
+                    <p><strong>Total commande:</strong> {selectedReturn.orders?.order_total || 0} MAD</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold mb-3">Raison du retour</h4>
+                <p className="text-sm bg-muted p-3 rounded">
+                  {selectedReturn.reason_description || 'Aucune raison spécifiée'}
+                </p>
+              </div>
+
+              {selectedReturn.return_type === 'rto' && (
+                <div>
+                  <h4 className="font-semibold mb-3">Analyse RTO</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="bg-red-50 p-3 rounded">
+                      <p className="font-medium text-red-800">Coût de transport</p>
+                      <p className="text-red-600">{Math.round(selectedReturn.return_value * 0.6)} MAD</p>
+                    </div>
+                    <div className="bg-orange-50 p-3 rounded">
+                      <p className="font-medium text-orange-800">Coût de manutention</p>
+                      <p className="text-orange-600">{Math.round(selectedReturn.return_value * 0.4)} MAD</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
