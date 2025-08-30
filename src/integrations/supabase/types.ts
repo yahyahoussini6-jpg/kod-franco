@@ -99,9 +99,11 @@ export type Database = {
           en_stock: boolean
           id: string
           media: Json
+          model_url: string | null
           nom: string
           prix: number
           slug: string
+          variables: Json | null
         }
         Insert: {
           created_at?: string
@@ -109,9 +111,11 @@ export type Database = {
           en_stock?: boolean
           id?: string
           media?: Json
+          model_url?: string | null
           nom: string
           prix: number
           slug: string
+          variables?: Json | null
         }
         Update: {
           created_at?: string
@@ -119,9 +123,11 @@ export type Database = {
           en_stock?: boolean
           id?: string
           media?: Json
+          model_url?: string | null
           nom?: string
           prix?: number
           slug?: string
+          variables?: Json | null
         }
         Relationships: []
       }
