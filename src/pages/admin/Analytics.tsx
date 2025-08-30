@@ -107,9 +107,16 @@ export default function AdminAnalytics() {
   const [filters, setFilters] = React.useState<IAnalyticsFilters>({});
 
   // Fetch overview metrics
-  const { data: overview, isLoading: overviewLoading } = useQuery({
+  const { data: overview, isLoading: overviewLoading, error: overviewError } = useQuery({
     queryKey: ['analytics-overview', dateRange, filters],
-    queryFn: () => analyticsClient.getOverview(dateRange.from, dateRange.to, filters),
+    queryFn: async () => {
+      console.log('Fetching analytics overview for:', { dateRange, filters });
+      const result = await analyticsClient.getOverview(dateRange.from, dateRange.to, filters);
+      console.log('Analytics overview result:', result);
+      return result;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 3,
   });
 
   // Fetch SLA metrics
@@ -207,26 +214,35 @@ export default function AdminAnalytics() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Debug Info */}
+          {overviewError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              Erreur analytics: {overviewError.message}
+            </div>
+          )}
+          
           {/* Executive KPIs Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
-              title="Delivered Revenue"
+              title="CA Livré"
               value={formatPrice(overview?.delivered_revenue || 0)}
               icon={DollarSign}
-              subtitle="MTD"
+              subtitle={`${overview?.delivered_orders || 0} commandes`}
             />
             <KpiCard
-              title="Delivered Orders"
+              title="Commandes Livrées"
               value={overview?.delivered_orders?.toString() || '0'}
               icon={Package}
+              subtitle="Total livré"
             />
             <KpiCard
-              title="AOV (Delivered)"
+              title="Panier Moyen"
               value={formatPrice(overview?.delivered_aov || 0)}
               icon={TrendingUp}
+              subtitle="Sur commandes livrées"
             />
             <KpiCard
-              title="Contribution"
+              title="Marge Contributive"
               value={formatPrice(overview?.contribution || 0)}
               icon={Target}
               subtitle={formatPercentage(overview?.contribution_pct || 0)}
@@ -236,26 +252,28 @@ export default function AdminAnalytics() {
           {/* Executive KPIs Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
-              title="Delivery Rate"
+              title="Taux de Livraison"
               value={formatPercentage(overview?.delivery_rate || 0)}
               icon={TrendingUp}
-              subtitle="Post-ship"
+              subtitle="Expédiées → Livrées"
             />
             <KpiCard
-              title="RTO Rate"
+              title="Taux RTO"
               value={formatPercentage(overview?.rto_rate || 0)}
               icon={TrendingDown}
+              subtitle="Retours après expédition"
             />
             <KpiCard
-              title="Cancel Rate"
+              title="Taux d'Annulation"
               value={formatPercentage(overview?.cancel_rate || 0)}
               icon={TrendingDown}
-              subtitle="Pre-ship"
+              subtitle="Avant expédition"
             />
             <KpiCard
-              title="Attempted GMV"
+              title="GMV Tenté"
               value={formatPrice(overview?.attempted_gmv || 0)}
               icon={DollarSign}
+              subtitle="Toutes commandes"
             />
           </div>
 
