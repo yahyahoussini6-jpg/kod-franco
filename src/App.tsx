@@ -1,10 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { ShoppingCart, Package } from "lucide-react";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import { ShoppingCart, Package, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { CartProvider, useCart } from "@/context/CartContext";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -12,6 +13,11 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import TrackOrder from "./pages/TrackOrder";
 import Confirmation from "./pages/Confirmation";
+import Auth from "./pages/Auth";
+import AdminLayout from "./pages/admin/Layout";
+import AdminAnalytics from "./pages/admin/Analytics";
+import AdminProducts from "./pages/admin/Products";
+import AdminOrders from "./pages/admin/Orders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +41,7 @@ function CartIcon() {
 }
 
 function Navigation() {
+  const { user, signOut } = useAuth();
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -55,6 +62,24 @@ function Navigation() {
         </div>
 
         <div className="flex items-center gap-2">
+          {user ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin">
+                  <Package className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth">
+                <User className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           <Button variant="ghost" size="sm" asChild>
             <Link to="/suivi-commande">
               <Package className="h-4 w-4" />
@@ -69,7 +94,8 @@ function Navigation() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <CartProvider>
+    <AuthProvider>
+      <CartProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -82,11 +108,18 @@ const App = () => (
               <Route path="/panier" element={<Cart />} />
               <Route path="/suivi-commande" element={<TrackOrder />} />
               <Route path="/confirmation/:code" element={<Confirmation />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminAnalytics />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </BrowserRouter>
       </CartProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
