@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { formatPrice, formatDate } from '@/lib/format';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -17,11 +20,19 @@ import {
   CreditCard,
   Banknote,
   Target,
-  FileText
+  FileText,
+  RefreshCw,
+  Eye,
+  X
 } from 'lucide-react';
 
 export default function FinancePage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch financial transactions
   const { data: transactions, isLoading } = useQuery({
@@ -74,12 +85,109 @@ export default function FinancePage() {
 
   const filteredTransactions = React.useMemo(() => {
     if (!transactions) return [];
-    return transactions.filter(transaction => 
-      transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (transaction.orders?.client_nom || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [transactions, searchTerm]);
+    return transactions.filter(transaction => {
+      const matchesSearch = transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (transaction.orders?.client_nom || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
+      const matchesType = typeFilter === 'all' || transaction.transaction_type === typeFilter;
+      
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [transactions, searchTerm, statusFilter, typeFilter]);
+
+  // Calculate real COGS by category
+  const cogsByCategory = React.useMemo(() => {
+    if (!orders) return {};
+    
+    const categoryStats = orders.reduce((acc, order) => {
+      // For now, we'll use a default category mapping since we don't have the order items with categories
+      const category = 'Produits'; // This would come from order_items.category in real implementation
+      const cogs = Number(order.cogs_total || 0);
+      
+      if (!acc[category]) {
+        acc[category] = { total: 0, percentage: 0 };
+      }
+      acc[category].total += cogs;
+      
+      return acc;
+    }, {} as Record<string, { total: number; percentage: number }>);
+    
+    const totalCogs = Object.values(categoryStats).reduce((sum, cat) => sum + cat.total, 0);
+    
+    // Calculate percentages
+    Object.keys(categoryStats).forEach(category => {
+      categoryStats[category].percentage = totalCogs > 0 ? (categoryStats[category].total / totalCogs) * 100 : 0;
+    });
+    
+    return categoryStats;
+  }, [orders]);
+
+  // Export functions
+  const handleExportAccounting = () => {
+    if (!transactions || !orders) {
+      toast({
+        title: "Erreur",
+        description: "Aucune donnée à exporter",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const csvData = transactions.map(t => ({
+      'Référence': t.reference_number || t.id.slice(0, 8),
+      'Type': t.transaction_type,
+      'Montant': t.amount,
+      'Statut': t.status,
+      'Date': formatDate(t.created_at),
+      'Description': t.description || '',
+      'Client': t.customer_profiles?.full_name || t.orders?.client_nom || 'N/A'
+    }));
+    
+    const csv = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    
+    toast({
+      title: "Export réussi",
+      description: "Le fichier comptabilité a été téléchargé"
+    });
+  };
+
+  const handleCreateInvoice = () => {
+    toast({
+      title: "Nouvelle facture",
+      description: "Fonctionnalité en développement"
+    });
+  };
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['admin-financial-transactions'] });
+    await queryClient.invalidateQueries({ queryKey: ['admin-orders-finance'] });
+    toast({
+      title: "Données actualisées",
+      description: "Les données financières ont été mises à jour"
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setTypeFilter('all');
+    toast({
+      title: "Filtres effacés",
+      description: "Tous les filtres ont été réinitialisés"
+    });
+  };
 
   const getTransactionTypeBadge = (type: string) => {
     const typeMap = {
@@ -136,11 +244,15 @@ export default function FinancePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleRefresh}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Actualiser
+          </Button>
+          <Button variant="outline" onClick={handleExportAccounting}>
             <Download className="mr-2 h-4 w-4" />
             Export Compta
           </Button>
-          <Button>
+          <Button onClick={handleCreateInvoice}>
             <FileText className="mr-2 h-4 w-4" />
             Nouvelle Facture
           </Button>
@@ -155,7 +267,7 @@ export default function FinancePage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} MAD</div>
+            <div className="text-2xl font-bold">{formatPrice(stats.revenue)}</div>
             <p className="text-xs text-muted-foreground">
               CA des commandes livrées
             </p>
@@ -168,7 +280,7 @@ export default function FinancePage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.profit.toLocaleString()} MAD</div>
+            <div className="text-2xl font-bold">{formatPrice(stats.profit)}</div>
             <p className="text-xs text-muted-foreground">
               {stats.revenue > 0 ? Math.round((stats.profit / stats.revenue) * 100) : 0}% de marge
             </p>
@@ -181,7 +293,7 @@ export default function FinancePage() {
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.codFees.toLocaleString()} MAD</div>
+            <div className="text-2xl font-bold">{formatPrice(stats.codFees)}</div>
             <p className="text-xs text-muted-foreground">
               Total frais contre-remboursement
             </p>
@@ -194,7 +306,7 @@ export default function FinancePage() {
             <Receipt className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pending.toLocaleString()} MAD</div>
+            <div className="text-2xl font-bold text-orange-600">{formatPrice(stats.pending)}</div>
             <p className="text-xs text-muted-foreground">
               Transactions en attente
             </p>
@@ -217,13 +329,34 @@ export default function FinancePage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline">
-              <Search className="mr-2 h-4 w-4" />
-              Rechercher
-            </Button>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtres
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="pending">En attente</SelectItem>
+                <SelectItem value="completed">Complété</SelectItem>
+                <SelectItem value="failed">Échoué</SelectItem>
+                <SelectItem value="cancelled">Annulé</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="sale">Vente</SelectItem>
+                <SelectItem value="refund">Remboursement</SelectItem>
+                <SelectItem value="cod_fee">Frais COD</SelectItem>
+                <SelectItem value="shipping_fee">Frais Livraison</SelectItem>
+                <SelectItem value="cost">Coût</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={handleClearFilters}>
+              <X className="mr-2 h-4 w-4" />
+              Effacer
             </Button>
           </div>
 
@@ -284,19 +417,74 @@ export default function FinancePage() {
                             <span className={`font-medium ${
                               transaction.transaction_type === 'refund' ? 'text-red-600' : 'text-green-600'
                             }`}>
-                              {transaction.transaction_type === 'refund' ? '-' : '+'}{transaction.amount} MAD
+                              {transaction.transaction_type === 'refund' ? '-' : '+'}{formatPrice(Number(transaction.amount))}
                             </span>
                           </td>
                           <td className="p-4">
                             <span className="text-sm">
-                              {new Date(transaction.created_at).toLocaleDateString('fr-FR')}
+                              {formatDate(transaction.created_at)}
                             </span>
                           </td>
                           <td className="p-4">
                             <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
                           </td>
                           <td className="p-4">
-                            <Button variant="outline" size="sm">Voir</Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => setSelectedTransaction(transaction)}>
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  Voir
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Détails de la Transaction</DialogTitle>
+                                </DialogHeader>
+                                {selectedTransaction && (
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <label className="text-sm font-medium">Référence</label>
+                                        <p className="font-mono text-sm">{selectedTransaction.reference_number || selectedTransaction.id}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Type</label>
+                                        <p>{getTransactionTypeBadge(selectedTransaction.transaction_type).label}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Montant</label>
+                                        <p className="font-medium">{formatPrice(Number(selectedTransaction.amount))}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Statut</label>
+                                        <p>{getStatusBadge(selectedTransaction.status).label}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Date</label>
+                                        <p>{formatDate(selectedTransaction.created_at)}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Méthode de paiement</label>
+                                        <p>{selectedTransaction.payment_method || 'N/A'}</p>
+                                      </div>
+                                    </div>
+                                    {selectedTransaction.description && (
+                                      <div>
+                                        <label className="text-sm font-medium">Description</label>
+                                        <p className="text-sm text-muted-foreground">{selectedTransaction.description}</p>
+                                      </div>
+                                    )}
+                                    {selectedTransaction.orders && (
+                                      <div>
+                                        <label className="text-sm font-medium">Commande associée</label>
+                                        <p className="text-sm">Code: {selectedTransaction.orders.code_suivi}</p>
+                                        <p className="text-sm">Client: {selectedTransaction.orders.client_nom}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
                           </td>
                         </tr>
                       );
@@ -317,34 +505,21 @@ export default function FinancePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Chaussures</span>
-                <div className="text-right">
-                  <p className="font-medium">25,400 MAD</p>
-                  <p className="text-sm text-muted-foreground">32.4%</p>
+              {Object.keys(cogsByCategory).length > 0 ? (
+                Object.entries(cogsByCategory).map(([category, data]) => (
+                  <div key={category} className="flex justify-between items-center">
+                    <span>{category}</span>
+                    <div className="text-right">
+                      <p className="font-medium">{formatPrice(data.total)}</p>
+                      <p className="text-sm text-muted-foreground">{data.percentage.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground py-4">
+                  Aucune donnée COGS disponible
                 </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Vêtements</span>
-                <div className="text-right">
-                  <p className="font-medium">32,100 MAD</p>
-                  <p className="text-sm text-muted-foreground">41.0%</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Accessoires</span>
-                <div className="text-right">
-                  <p className="font-medium">12,833 MAD</p>
-                  <p className="text-sm text-muted-foreground">16.4%</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Électronique</span>
-                <div className="text-right">
-                  <p className="font-medium">8,000 MAD</p>
-                  <p className="text-sm text-muted-foreground">10.2%</p>
-                </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -355,29 +530,49 @@ export default function FinancePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>AOV Moyen</span>
-                <span className="font-medium">456 MAD</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>COGS par Commande</span>
-                <span className="font-medium">152 MAD</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Frais d'Expédition</span>
-                <span className="font-medium">45 MAD</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Frais COD</span>
-                <span className="font-medium">15 MAD</span>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center font-bold">
-                  <span>Marge par Commande</span>
-                  <span className="text-green-600">244 MAD</span>
+              {orders && orders.length > 0 ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span>AOV Moyen</span>
+                    <span className="font-medium">
+                      {formatPrice(orders.reduce((sum, o) => sum + Number(o.order_total || 0), 0) / orders.length)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>COGS par Commande</span>
+                    <span className="font-medium">
+                      {formatPrice(orders.reduce((sum, o) => sum + Number(o.cogs_total || 0), 0) / orders.length)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Frais d'Expédition</span>
+                    <span className="font-medium">
+                      {formatPrice(orders.reduce((sum, o) => sum + Number(o.shipping_cost || 0), 0) / orders.length)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Frais COD</span>
+                    <span className="font-medium">
+                      {formatPrice(orders.reduce((sum, o) => sum + Number(o.cod_fee || 0), 0) / orders.length)}
+                    </span>
+                  </div>
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between items-center font-bold">
+                      <span>Marge par Commande</span>
+                      <span className="text-green-600">
+                        {formatPrice(stats.profit / orders.length)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground text-right">
+                      {stats.revenue > 0 ? Math.round((stats.profit / stats.revenue) * 100) : 0}% de marge
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground py-4">
+                  Aucune donnée disponible
                 </div>
-                <p className="text-sm text-muted-foreground text-right">53.5% de marge</p>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -454,19 +649,35 @@ export default function FinancePage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => handleExportAccounting()}
+            >
               <FileText className="mb-2 h-6 w-6" />
               <span>Journal des Ventes</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => toast({ title: "Export COGS", description: "Fonctionnalité en développement" })}
+            >
               <Calculator className="mb-2 h-6 w-6" />
               <span>État COGS</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => toast({ title: "Factures TVA", description: "Fonctionnalité en développement" })}
+            >
               <Receipt className="mb-2 h-6 w-6" />
               <span>Factures TVA</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => toast({ title: "Réconciliation COD", description: "Fonctionnalité en développement" })}
+            >
               <DollarSign className="mb-2 h-6 w-6" />
               <span>Réconciliation COD</span>
             </Button>
