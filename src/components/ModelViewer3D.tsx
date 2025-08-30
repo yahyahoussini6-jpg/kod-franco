@@ -1,5 +1,5 @@
-import React, { Suspense, useState } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
+import React, { Suspense, useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { OBJLoader } from 'three-stdlib';
 
@@ -8,23 +8,69 @@ interface ModelViewer3DProps {
   urlMtl?: string;
 }
 
-function Model({ urlObj, onError }: { urlObj: string; onError: () => void }) {
-  try {
-    const obj = useLoader(OBJLoader, urlObj);
-    return <primitive object={obj} scale={1} />;
-  } catch (error) {
-    console.error('Error loading 3D model:', error);
-    onError();
-    return null;
+function Model({ urlObj, onError, onLoad }: { urlObj: string; onError: (error: any) => void; onLoad: () => void }) {
+  const [obj, setObj] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loader = new OBJLoader();
+    
+    console.log('Loading 3D model from:', urlObj);
+    
+    // First check if the URL is accessible
+    fetch(urlObj, { method: 'HEAD' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        console.log('Model URL is accessible, loading...');
+        
+        loader.load(
+          urlObj,
+          (loadedObj) => {
+            console.log('3D model loaded successfully:', loadedObj);
+            setObj(loadedObj);
+            setIsLoading(false);
+            onLoad();
+          },
+          (progress) => {
+            console.log('Loading progress:', progress);
+          },
+          (error) => {
+            console.error('Error loading 3D model:', error);
+            setIsLoading(false);
+            onError(error);
+          }
+        );
+      })
+      .catch(error => {
+        console.error('Error accessing model URL:', error);
+        setIsLoading(false);
+        onError(error);
+      });
+  }, [urlObj, onError, onLoad]);
+
+  if (isLoading) {
+    return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="gray" wireframe />
+      </mesh>
+    );
   }
+
+  if (!obj) return null;
+
+  return <primitive object={obj} scale={[2, 2, 2]} position={[0, 0, 0]} />;
 }
 
 function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const handleError = () => {
-    setError(true);
+  const handleError = (error: any) => {
+    console.error('ModelViewer3D Error:', error);
+    setError(error);
     setLoading(false);
   };
 
@@ -41,11 +87,22 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
   }
 
   return (
-    <div className="h-[480px] w-full border rounded-lg overflow-hidden bg-background">
+    <div className="h-[480px] w-full border rounded-lg overflow-hidden bg-background relative">
       {error ? (
-        <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2">
-          <div>Impossible de charger le modèle 3D</div>
-          <div className="text-sm opacity-75">Vérifiez que le fichier .obj est valide</div>
+        <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2 p-4">
+          <div className="font-semibold">Impossible de charger le modèle 3D</div>
+          <div className="text-sm opacity-75 text-center">
+            {error?.message || 'Vérifiez que le fichier .obj est valide et accessible'}
+          </div>
+          <div className="text-xs opacity-50 max-w-xs text-center break-all">
+            URL: {urlObj}
+          </div>
+          <button 
+            onClick={() => window.open(urlObj, '_blank')} 
+            className="text-xs underline opacity-75 hover:opacity-100"
+          >
+            Tester l'URL directement
+          </button>
         </div>
       ) : (
         <>
@@ -69,13 +126,12 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
                 </mesh>
               }
             >
-              <Model urlObj={urlObj} onError={handleError} />
+              <Model urlObj={urlObj} onError={handleError} onLoad={handleLoad} />
             </Suspense>
             <OrbitControls 
               enableZoom={true} 
               enablePan={true} 
               enableRotate={true}
-              onStart={handleLoad}
             />
           </Canvas>
         </>
