@@ -3,8 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { 
   UserCheck, 
   Phone, 
@@ -14,23 +20,81 @@ import {
   Search,
   Filter,
   Download,
-  Plus
+  Plus,
+  Edit,
+  Eye
 } from 'lucide-react';
+
+const clientSchema = z.object({
+  full_name: z.string().min(2, 'Le nom complet est requis'),
+  phone: z.string().min(10, 'Le numéro de téléphone est requis'),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  city: z.string().min(2, 'La ville est requise'),
+  address: z.string().min(5, 'L\'adresse complète est requise'),
+});
+
+type ClientForm = z.infer<typeof clientSchema>;
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [showClientDetails, setShowClientDetails] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch customer profiles
+  const form = useForm<ClientForm>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      full_name: '',
+      phone: '',
+      email: '',
+      city: '',
+      address: '',
+    },
+  });
+
+  // Fetch customer profiles with order data
   const { data: customers, isLoading } = useQuery({
     queryKey: ['admin-customers'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get customer profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('customer_profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (profilesError) throw profilesError;
+
+      // Get order statistics for each customer
+      const customersWithStats = await Promise.all(profiles.map(async (profile) => {
+        const { data: orders, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, order_total, status, created_at')
+          .eq('client_phone', profile.phone);
+
+        if (ordersError) {
+          console.error('Error fetching orders:', ordersError);
+          return { ...profile, orderCount: 0, totalSpent: 0, lastOrderDate: null };
+        }
+
+        const orderCount = orders.length;
+        const totalSpent = orders
+          .filter(o => o.status === 'livree')
+          .reduce((sum, order) => sum + Number(order.order_total || 0), 0);
+        
+        const lastOrderDate = orders.length > 0 ? 
+          Math.max(...orders.map(o => new Date(o.created_at || '').getTime())) : null;
+
+        return {
+          ...profile,
+          orderCount,
+          totalSpent,
+          lastOrderDate: lastOrderDate ? new Date(lastOrderDate) : null
+        };
+      }));
+
+      return customersWithStats;
     }
   });
 
@@ -65,12 +129,101 @@ export default function ClientsPage() {
     }
   });
 
+  // Create new client mutation
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: ClientForm) => {
+      const { error } = await supabase
+        .from('customer_profiles')
+        .insert({
+          full_name: clientData.full_name,
+          phone: clientData.phone,
+          email: clientData.email || null,
+          city: clientData.city,
+          address: clientData.address,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-stats'] });
+      toast({
+        title: 'Client créé',
+        description: 'Le nouveau client a été ajouté avec succès',
+      });
+      setShowNewClientDialog(false);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erreur',
+        description: error.message.includes('duplicate') ? 
+          'Un client avec ce numéro de téléphone existe déjà' : 
+          'Impossible de créer le client',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleCreateClient = (data: ClientForm) => {
+    createClientMutation.mutate(data);
+  };
+
+  const handleExport = () => {
+    if (!customers || customers.length === 0) {
+      toast({
+        title: 'Aucune donnée à exporter',
+        description: 'La base clients est vide',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const csvData = customers.map(customer => ({
+      'Nom complet': customer.full_name,
+      'Téléphone': customer.phone,
+      'Email': customer.email || '',
+      'Ville': customer.city || '',
+      'Adresse': customer.address || '',
+      'Nombre commandes': customer.orderCount || 0,
+      'Total dépensé': customer.totalSpent || 0,
+      'Score risque': customer.risk_score || 0,
+      'Statut VIP': customer.is_vip ? 'Oui' : 'Non',
+      'Date création': new Date(customer.created_at).toLocaleDateString('fr-FR'),
+      'Dernière commande': customer.lastOrderDate ? 
+        customer.lastOrderDate.toLocaleDateString('fr-FR') : 'Aucune'
+    }));
+    
+    const headers = Object.keys(csvData[0]);
+    const csv = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `clients_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Export réussi',
+      description: 'La base clients a été exportée en CSV',
+    });
+  };
+
   const filteredCustomers = React.useMemo(() => {
     if (!customers) return [];
     return customers.filter(customer => 
       customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.phone.includes(searchTerm) ||
-      (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.city && customer.city.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [customers, searchTerm]);
 
@@ -119,11 +272,11 @@ export default function ClientsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button>
+          <Button onClick={() => setShowNewClientDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nouveau Client
           </Button>
@@ -200,13 +353,19 @@ export default function ClientsPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Apply current search filter
+              setSearchTerm(searchTerm);
+            }}>
               <Search className="mr-2 h-4 w-4" />
               Rechercher
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Clear all filters
+              setSearchTerm('');
+            }}>
               <Filter className="mr-2 h-4 w-4" />
-              Filtres
+              Effacer filtres
             </Button>
           </div>
 
@@ -265,17 +424,28 @@ export default function ClientsPage() {
                               {customer.city || 'N/A'}
                             </div>
                           </td>
-                          <td className="p-4">-</td>
-                          <td className="p-4">- MAD</td>
-                          <td className="p-4">
-                            <Badge variant={riskBadge.variant}>{riskBadge.label}</Badge>
-                          </td>
-                          <td className="p-4">
-                            <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
-                          </td>
-                          <td className="p-4">
-                            <Button variant="outline" size="sm">Voir</Button>
-                          </td>
+                           <td className="p-4">{customer.orderCount || 0}</td>
+                           <td className="p-4">{customer.totalSpent || 0} MAD</td>
+                           <td className="p-4">
+                             <Badge variant={riskBadge.variant}>{riskBadge.label}</Badge>
+                           </td>
+                           <td className="p-4">
+                             <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                           </td>
+                           <td className="p-4">
+                             <div className="flex gap-2">
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => {
+                                   setSelectedClient(customer);
+                                   setShowClientDetails(true);
+                                 }}
+                               >
+                                 <Eye className="h-3 w-3" />
+                               </Button>
+                             </div>
+                           </td>
                         </tr>
                       );
                     })
@@ -346,6 +516,158 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* New Client Dialog */}
+      <Dialog open={showNewClientDialog} onOpenChange={setShowNewClientDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nouveau Client</DialogTitle>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleCreateClient)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom complet</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="06xxxxxxxx" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (optionnel)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse complète</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewClientDialog(false)}
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={createClientMutation.isPending}
+                >
+                  {createClientMutation.isPending ? 'Création...' : 'Créer'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Details Dialog */}
+      <Dialog open={showClientDetails} onOpenChange={setShowClientDetails}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Détails du client - {selectedClient?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedClient && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-3">Informations personnelles</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Nom:</strong> {selectedClient.full_name}</p>
+                    <p><strong>Téléphone:</strong> {selectedClient.phone}</p>
+                    <p><strong>Email:</strong> {selectedClient.email || 'Non renseigné'}</p>
+                    <p><strong>Ville:</strong> {selectedClient.city || 'Non renseignée'}</p>
+                    <p><strong>Adresse:</strong> {selectedClient.address || 'Non renseignée'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-3">Statistiques</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Client depuis:</strong> {new Date(selectedClient.created_at).toLocaleDateString('fr-FR')}</p>
+                    <p><strong>Nombre de commandes:</strong> {selectedClient.orderCount || 0}</p>
+                    <p><strong>Total dépensé:</strong> {selectedClient.totalSpent || 0} MAD</p>
+                    <p><strong>Score de risque:</strong> {selectedClient.risk_score || 0}</p>
+                    <p className="flex items-center gap-2">
+                      <strong>Statut:</strong> 
+                      <Badge variant={getStatusBadge(selectedClient).variant}>
+                        {getStatusBadge(selectedClient).label}
+                      </Badge>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedClient.notes && (
+                <div>
+                  <h4 className="font-semibold mb-3">Notes</h4>
+                  <p className="text-sm bg-muted p-3 rounded">{selectedClient.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
