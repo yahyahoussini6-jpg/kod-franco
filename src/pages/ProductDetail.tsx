@@ -110,89 +110,111 @@ export default function ProductDetail() {
   return (
     <>
       <div className="container mx-auto px-4 py-4 md:py-8">
-        {/* Images Section - Always first on mobile */}
-        <div className="mb-6 lg:mb-8">
-          {images.length > 0 ? (
-            <div className="space-y-4">
-              <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 overflow-hidden rounded-lg bg-muted">
-                <img
-                  src={images[currentImageIndex]?.url}
-                  alt={product.nom}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Left Column - Images */}
+          <div className="order-1">
+            {images.length > 0 ? (
+              <div className="space-y-4">
+                {/* Main Image */}
+                <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted shadow-lg">
+                  <img
+                    src={images[currentImageIndex]?.url}
+                    alt={product.nom}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                
+                {/* Thumbnail Gallery */}
+                {images.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg border-2 overflow-hidden transition-all ${
+                          currentImageIndex === index 
+                            ? 'border-primary shadow-md' 
+                            : 'border-muted hover:border-primary/50'
+                        }`}
+                      >
+                        <img
+                          src={image.url}
+                          alt={`${product.nom} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : videos.length > 0 ? (
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted shadow-lg">
+                <video
+                  src={videos[0].url}
+                  controls
                   className="w-full h-full object-cover"
                 />
               </div>
-              {images.length > 1 && (
-                <div className="flex gap-2 justify-center overflow-x-auto pb-2">
-                  {images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded border-2 overflow-hidden ${
-                        currentImageIndex === index ? 'border-primary' : 'border-muted'
-                      }`}
-                    >
-                      <img
-                        src={image.url}
-                        alt={`${product.nom} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
+            ) : (
+              <div className="aspect-square w-full flex items-center justify-center bg-muted rounded-lg shadow-lg">
+                <span className="text-muted-foreground text-sm md:text-base">Aucune image disponible</span>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Product Information */}
+          <div className="order-2 space-y-6">
+            {/* Product Header */}
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">{product.nom}</h1>
+                  <Badge 
+                    variant={product.en_stock ? "default" : "destructive"}
+                    className="flex-shrink-0"
+                  >
+                    {product.en_stock ? "En stock" : "Rupture"}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl md:text-4xl font-bold text-primary">
+                    {formatPrice(product.prix)}
+                  </span>
+                  <span className="text-muted-foreground text-sm">TTC</span>
+                </div>
+              </div>
+              
+              {product.description && (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-muted-foreground leading-relaxed">
+                    {product.description}
+                  </p>
                 </div>
               )}
             </div>
-          ) : videos.length > 0 ? (
-            <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 overflow-hidden rounded-lg bg-muted">
-              <video
-                src={videos[0].url}
-                controls
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="aspect-square max-w-md mx-auto lg:max-w-none lg:mx-0 flex items-center justify-center bg-muted rounded-lg">
-              <span className="text-muted-foreground text-sm md:text-base">Aucune image disponible</span>
-            </div>
-          )}
-        </div>
 
-        {/* Product Information */}
-        <div className="space-y-4 lg:space-y-6 max-w-2xl mx-auto lg:max-w-none">
-          <div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                <h1 className="text-2xl md:text-3xl font-bold">{product.nom}</h1>
-                <Badge variant={product.en_stock ? "default" : "destructive"}>
-                  {product.en_stock ? "En stock" : "Rupture"}
-                </Badge>
-              </div>
-              <p className="text-2xl md:text-3xl font-bold text-primary mb-4">
-                {formatPrice(product.prix)}
-              </p>
-              {product.description && (
-                <p className="text-muted-foreground leading-relaxed text-sm md:text-base mb-4">
-                  {product.description}
-                </p>
-              )}
-            </div>
-
-            {/* Variables */}
+            {/* Product Options */}
             {(colors.length > 0 || sizes.length > 0) && (
-              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-                <h3 className="font-semibold">Options disponibles</h3>
+              <div className="space-y-6 p-6 border rounded-xl bg-card shadow-sm">
+                <h3 className="text-lg font-semibold">Personnalisez votre produit</h3>
                 
                 {colors.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Palette className="h-4 w-4" />
-                      <Label>Couleur</Label>
+                      <Palette className="h-5 w-5 text-primary" />
+                      <Label className="text-base font-medium">Couleur</Label>
                     </div>
                     <RadioGroup value={selectedColor} onValueChange={setSelectedColor}>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {colors.map((color: string) => (
                           <div key={color} className="flex items-center space-x-2">
                             <RadioGroupItem value={color} id={`color-${color}`} />
                             <Label htmlFor={`color-${color}`} className="cursor-pointer">
-                              <Badge variant={selectedColor === color ? "default" : "outline"}>
+                              <Badge 
+                                variant={selectedColor === color ? "default" : "outline"}
+                                className="px-3 py-1 text-sm hover:shadow-md transition-shadow"
+                              >
                                 {color}
                               </Badge>
                             </Label>
@@ -204,18 +226,21 @@ export default function ProductDetail() {
                 )}
 
                 {sizes.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      <Label>Taille</Label>
+                      <Ruler className="h-5 w-5 text-primary" />
+                      <Label className="text-base font-medium">Taille</Label>
                     </div>
                     <RadioGroup value={selectedSize} onValueChange={setSelectedSize}>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {sizes.map((size: string) => (
                           <div key={size} className="flex items-center space-x-2">
                             <RadioGroupItem value={size} id={`size-${size}`} />
                             <Label htmlFor={`size-${size}`} className="cursor-pointer">
-                              <Badge variant={selectedSize === size ? "default" : "outline"}>
+                              <Badge 
+                                variant={selectedSize === size ? "default" : "outline"}
+                                className="px-3 py-1 text-sm hover:shadow-md transition-shadow"
+                              >
                                 {size}
                               </Badge>
                             </Label>
@@ -228,12 +253,12 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3">
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-4">
               <Button
                 onClick={handleBuyNow}
                 size="lg"
-                className="w-full h-12 text-base"
+                className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
                 disabled={!product.en_stock}
               >
                 Acheter maintenant
@@ -243,10 +268,10 @@ export default function ProductDetail() {
                 onClick={handleAddToCart}
                 variant="outline"
                 size="lg"
-                className="w-full h-12 text-base"
+                className="w-full h-12 text-base border-2 hover:bg-muted/50"
                 disabled={!product.en_stock}
               >
-                <ShoppingCart className="mr-2 h-4 w-4" />
+                <ShoppingCart className="mr-2 h-5 w-5" />
                 Ajouter au panier
               </Button>
 
@@ -255,25 +280,26 @@ export default function ProductDetail() {
                   onClick={handleWhatsApp}
                   variant="secondary"
                   size="lg"
-                  className="w-full h-12 text-base"
+                  className="w-full h-12 text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
                 >
-                  <MessageCircle className="mr-2 h-4 w-4" />
+                  <MessageCircle className="mr-2 h-5 w-5" />
                   Commander via WhatsApp
                 </Button>
               )}
             </div>
+          </div>
         </div>
 
-        {/* 3D Model Section - Below everything */}
+        {/* 3D Model Section - Full Width Below */}
         {hasModel3D && (
-          <div className="mt-8 lg:mt-12">
-            <div className="text-center mb-4">
-              <h2 className="text-xl md:text-2xl font-bold mb-2">Modèle 3D interactif</h2>
-              <p className="text-muted-foreground text-sm md:text-base">
-                Explorez le produit en 3D - utilisez votre souris pour faire tourner, zoomer et déplacer
+          <div className="mt-16">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Modèle 3D interactif</h2>
+              <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+                Explorez le produit en 3D - utilisez votre souris pour faire tourner, zoomer et déplacer le modèle
               </p>
             </div>
-            <div className="w-full">
+            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-6 shadow-lg">
               <ModelViewer3D urlObj={product.model_url} />
             </div>
           </div>
