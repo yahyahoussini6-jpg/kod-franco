@@ -16,7 +16,9 @@ import {
   Truck,
   Settings,
   Database,
-  TestTube
+  TestTube,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 
 const navigation = [
@@ -44,6 +46,68 @@ const navigation = [
     ]
   }
 ];
+
+function NavigationItem({ item, isActive }: { item: any; isActive: boolean }) {
+  if (item.type === 'section') {
+    const [isExpanded, setIsExpanded] = React.useState(
+      item.items?.some((subItem: any) => window.location.pathname.startsWith(subItem.href))
+    );
+
+    return (
+      <li>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+        >
+          <span>{item.name}</span>
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+        {isExpanded && (
+          <ul className="mt-1 ml-4 space-y-1">
+            {item.items?.map((subItem: any) => {
+              const subIsActive = location.pathname.startsWith(subItem.href);
+              return (
+                <li key={subItem.name}>
+                  <Link
+                    to={subItem.href}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      subIsActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <subItem.icon className="h-4 w-4" />
+                    <span>{subItem.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <Link
+        to={item.href}
+        className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+        }`}
+      >
+        <item.icon className="h-4 w-4" />
+        <span>{item.name}</span>
+      </Link>
+    </li>
+  );
+}
 
 export default function AdminLayout() {
   const { user, userRole, signOut } = useAuth();
@@ -130,19 +194,7 @@ export default function AdminLayout() {
                   : location.pathname.startsWith(item.href);
                 
                 return (
-                  <li key={item.name}>
-                    <Link
-                      to={item.href}
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  </li>
+                  <NavigationItem key={item.name} item={item} isActive={isActive} />
                 );
               })}
             </ul>

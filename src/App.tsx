@@ -21,6 +21,10 @@ import AdminLayout from "./pages/admin/Layout";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
+import AdminInventory from "./pages/admin/Inventory";
+import AdminClients from "./pages/admin/Clients";
+import AdminReturns from "./pages/admin/Returns";
+import AdminFinance from "./pages/admin/Finance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +117,10 @@ const App = () => (
                   <Route index element={<AdminAnalytics />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="orders" element={<AdminOrders />} />
+                  <Route path="inventory" element={<AdminInventory />} />
+                  <Route path="clients" element={<AdminClients />} />
+                  <Route path="returns" element={<AdminReturns />} />
+                  <Route path="finance" element={<AdminFinance />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
