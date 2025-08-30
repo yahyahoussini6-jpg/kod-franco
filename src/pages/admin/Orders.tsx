@@ -9,15 +9,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice, formatDate } from '@/lib/format';
+import { OrderStatusBadge } from '@/components/OrderStatusBadge';
+import { OrderStatus } from '@/theme/tokens';
 
-const statusColors = {
-  'NOUVELLE': 'bg-blue-100 text-blue-800',
-  'CONFIRMÉE': 'bg-green-100 text-green-800', 
-  'EN_PRÉPARATION': 'bg-yellow-100 text-yellow-800',
-  'EXPÉDIÉE': 'bg-purple-100 text-purple-800',
-  'LIVRÉE': 'bg-green-100 text-green-800',
-  'ANNULÉE': 'bg-red-100 text-red-800',
-  'RETOURNÉE': 'bg-orange-100 text-orange-800',
+// Map old status format to new format
+const statusMapping: Record<string, OrderStatus> = {
+  'NOUVELLE': 'nouvelle',
+  'CONFIRMÉE': 'confirmee',
+  'EN_PRÉPARATION': 'en_preparation',
+  'EXPÉDIÉE': 'expediee',
+  'LIVRÉE': 'livree',
+  'ANNULÉE': 'annulee',
+  'RETOURNÉE': 'retournee',
 };
 
 const statusLabels = {
@@ -129,9 +132,9 @@ export default function AdminOrders() {
                     <span className="font-bold text-lg">
                       {formatPrice(getOrderTotal(order))}
                     </span>
-                    <Badge className={statusColors[order.statut as keyof typeof statusColors]}>
-                      {statusLabels[order.statut as keyof typeof statusLabels]}
-                    </Badge>
+                    <OrderStatusBadge 
+                      status={statusMapping[order.statut] || 'nouvelle'} 
+                    />
                   </div>
                 </div>
 
@@ -227,10 +230,11 @@ export default function AdminOrders() {
                   <h4 className="font-semibold mb-3">Informations commande</h4>
                   <div className="space-y-2 text-sm">
                     <p><strong>Date:</strong> {formatDate(selectedOrder.created_at)}</p>
-                    <p><strong>Statut:</strong> 
-                      <Badge className={`ml-2 ${statusColors[selectedOrder.statut as keyof typeof statusColors]}`}>
-                        {statusLabels[selectedOrder.statut as keyof typeof statusLabels]}
-                      </Badge>
+                    <p className="flex items-center gap-2">
+                      <strong>Statut:</strong> 
+                      <OrderStatusBadge 
+                        status={statusMapping[selectedOrder.statut] || 'nouvelle'} 
+                      />
                     </p>
                     <p><strong>Total:</strong> {formatPrice(getOrderTotal(selectedOrder))}</p>
                   </div>

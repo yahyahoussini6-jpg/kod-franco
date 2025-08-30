@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { CartProvider, useCart } from "@/context/CartContext";
+import { ThemeProvider } from "@/theme/ThemeProvider";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -63,6 +65,7 @@ function Navigation() {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeSwitcher />
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild>
@@ -90,32 +93,34 @@ function Navigation() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen bg-background">
-            <Navigation />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/produits" element={<Products />} />
-              <Route path="/produit/:slug" element={<ProductDetail />} />
-              <Route path="/panier" element={<Cart />} />
-              <Route path="/suivi-commande" element={<TrackOrder />} />
-              <Route path="/confirmation/:code" element={<Confirmation />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminAnalytics />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="orders" element={<AdminOrders />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen bg-background">
+              <Navigation />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/produits" element={<Products />} />
+                <Route path="/produit/:slug" element={<ProductDetail />} />
+                <Route path="/panier" element={<Cart />} />
+                <Route path="/suivi-commande" element={<TrackOrder />} />
+                <Route path="/confirmation/:code" element={<Confirmation />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminAnalytics />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </BrowserRouter>
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
