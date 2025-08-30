@@ -6,21 +6,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Phone, MapPin, MessageCircle, Clock, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
+    phone: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -29,16 +32,44 @@ const Contact = () => {
       return;
     }
 
-    // Simulate form submission
-    toast.success("Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.");
-    
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: ""
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Save to Supabase
+      const { error } = await supabase
+        .from('contacts')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject || null,
+            message: formData.message,
+            phone: formData.phone || null
+          }
+        ]);
+
+      if (error) {
+        console.error('Error saving contact message:', error);
+        toast.error("Erreur lors de l'envoi du message. Veuillez réessayer.");
+        return;
+      }
+
+      toast.success("Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.");
+      
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        phone: ""
+      });
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error("Erreur inattendue. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -177,6 +208,18 @@ const Contact = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone (optionnel)</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="Votre numéro de téléphone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
                   <Textarea
                     id="message"
@@ -189,9 +232,9 @@ const Contact = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   <Send className="h-4 w-4 mr-2" />
-                  Envoyer le message
+                  {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
                 </Button>
               </form>
             </CardContent>
