@@ -87,7 +87,7 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
   }
 
   return (
-    <div className="h-[480px] w-full border rounded-lg overflow-hidden bg-background relative">
+    <div className="h-[300px] md:h-[480px] w-full border rounded-lg overflow-hidden bg-background relative">
       {error ? (
         <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2 p-4">
           <div className="font-semibold">Impossible de charger le modèle 3D</div>

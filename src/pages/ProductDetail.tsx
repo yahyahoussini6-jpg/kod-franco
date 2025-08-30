@@ -96,12 +96,14 @@ export default function ProductDetail() {
   const hasModel3D = product.model_url;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Media */}
-        <div>
+        <div className="order-2 lg:order-1">
           {hasModel3D ? (
-            <ModelViewer3D urlObj={product.model_url} />
+            <div className="w-full">
+              <ModelViewer3D urlObj={product.model_url} />
+            </div>
           ) : images.length > 0 ? (
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
               <img
@@ -126,19 +128,19 @@ export default function ProductDetail() {
         </div>
 
         {/* Informations produit */}
-        <div className="space-y-6">
+        <div className="order-1 lg:order-2 space-y-4 lg:space-y-6">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">{product.nom}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+              <h1 className="text-2xl md:text-3xl font-bold">{product.nom}</h1>
               <Badge variant={product.en_stock ? "default" : "destructive"}>
                 {product.en_stock ? "En stock" : "Rupture"}
               </Badge>
             </div>
-            <p className="text-3xl font-bold text-primary mb-4">
+            <p className="text-2xl md:text-3xl font-bold text-primary mb-4">
               {formatPrice(product.prix)}
             </p>
             {product.description && (
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
                 {product.description}
               </p>
             )}
@@ -149,7 +151,7 @@ export default function ProductDetail() {
             <Button
               onClick={handleBuyNow}
               size="lg"
-              className="w-full"
+              className="w-full h-12 text-base"
               disabled={!product.en_stock}
             >
               Acheter maintenant
@@ -159,7 +161,7 @@ export default function ProductDetail() {
               onClick={handleAddToCart}
               variant="outline"
               size="lg"
-              className="w-full"
+              className="w-full h-12 text-base"
               disabled={!product.en_stock}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
@@ -171,7 +173,7 @@ export default function ProductDetail() {
                 onClick={handleWhatsApp}
                 variant="secondary"
                 size="lg"
-                className="w-full"
+                className="w-full h-12 text-base"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Commander via WhatsApp
