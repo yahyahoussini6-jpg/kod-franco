@@ -33,6 +33,9 @@ export function ProductCard({ product }: ProductCardProps) {
               src={imageMedia.url}
               alt={product.nom}
               className="w-full h-full object-cover hover:scale-105 transition-transform"
+              loading="lazy"
+              decoding="async"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
