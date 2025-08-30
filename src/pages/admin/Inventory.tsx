@@ -3,8 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { 
   Package, 
   AlertTriangle, 
@@ -18,9 +24,29 @@ import {
   Trash2
 } from 'lucide-react';
 
+const stockSchema = z.object({
+  stock_on_hand: z.number().min(0, 'Le stock doit être positif'),
+  min_stock_level: z.number().min(0, 'Le seuil minimum doit être positif'),
+  reserved: z.number().min(0, 'Le stock réservé doit être positif'),
+});
+
+type StockForm = z.infer<typeof stockSchema>;
+
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingStock, setEditingStock] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const form = useForm<StockForm>({
+    resolver: zodResolver(stockSchema),
+    defaultValues: {
+      stock_on_hand: 0,
+      min_stock_level: 0,
+      reserved: 0,
+    },
+  });
 
   // Fetch product variants and inventory
   const { data: inventory, isLoading } = useQuery({
@@ -111,6 +137,157 @@ export default function InventoryPage() {
     return types[type as keyof typeof types] || type;
   };
 
+  // Update stock mutation
+  const updateStockMutation = useMutation({
+    mutationFn: async ({ stockData, variantId }: { stockData: StockForm; variantId: string }) => {
+      // First, check if inventory record exists
+      const { data: existingStock } = await supabase
+        .from('inventory')
+        .select('id')
+        .eq('variant_id', variantId)
+        .single();
+
+      if (existingStock) {
+        // Update existing record
+        const { error } = await supabase
+          .from('inventory')
+          .update({
+            stock_on_hand: stockData.stock_on_hand,
+            min_stock_level: stockData.min_stock_level,
+            reserved: stockData.reserved,
+            updated_at: new Date().toISOString()
+          })
+          .eq('variant_id', variantId);
+        
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { error } = await supabase
+          .from('inventory')
+          .insert({
+            variant_id: variantId,
+            stock_on_hand: stockData.stock_on_hand,
+            min_stock_level: stockData.min_stock_level,
+            reserved: stockData.reserved,
+          });
+        
+        if (error) throw error;
+      }
+
+      // Record stock movement
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          variant_id: variantId,
+          movement_type: 'adjustment',
+          quantity: stockData.stock_on_hand,
+          reason: 'Stock adjustment via admin panel'
+        });
+      
+      if (movementError) throw movementError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      toast({
+        title: 'Stock mis à jour',
+        description: 'Les niveaux de stock ont été modifiés avec succès',
+      });
+      setShowEditDialog(false);
+      setEditingStock(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le stock',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete stock mutation
+  const deleteStockMutation = useMutation({
+    mutationFn: async (variantId: string) => {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('variant_id', variantId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      toast({
+        title: 'Stock supprimé',
+        description: 'L\'entrée de stock a été supprimée',
+      });
+    },
+  });
+
+  const handleEditStock = (variant: any) => {
+    const stock = variant.inventory?.[0];
+    setEditingStock(variant);
+    form.reset({
+      stock_on_hand: stock?.stock_on_hand || 0,
+      min_stock_level: stock?.min_stock_level || 0,
+      reserved: stock?.reserved || 0,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteStock = (variantId: string, productName: string) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le stock pour "${productName}" ?`)) {
+      deleteStockMutation.mutate(variantId);
+    }
+  };
+
+  const handleSubmitStock = (data: StockForm) => {
+    if (!editingStock) return;
+    updateStockMutation.mutate({
+      stockData: data,
+      variantId: editingStock.id
+    });
+  };
+
+  const handleExport = () => {
+    if (!inventory) return;
+    
+    const csvData = inventory.map(variant => {
+      const stock = variant.inventory?.[0];
+      return {
+        SKU: variant.sku,
+        Produit: variant.products.nom,
+        Variant: variant.name,
+        'Stock en main': stock?.stock_on_hand || 0,
+        'Réservé': stock?.reserved || 0,
+        'Disponible': (stock?.stock_on_hand || 0) - (stock?.reserved || 0),
+        'Seuil minimum': stock?.min_stock_level || 0,
+        'Prix achat': variant.cost,
+        'Valeur stock': (stock?.stock_on_hand || 0) * variant.cost
+      };
+    });
+    
+    const csv = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `inventaire_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: 'Export réussi',
+      description: 'L\'inventaire a été exporté en CSV',
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -144,11 +321,11 @@ export default function InventoryPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button>
+          <Button onClick={() => window.open('/admin/products', '_blank')}>
             <Plus className="mr-2 h-4 w-4" />
             Nouveau Produit
           </Button>
@@ -285,16 +462,25 @@ export default function InventoryPage() {
                           <td className="p-4">
                             <Badge variant={status.variant}>{status.label}</Badge>
                           </td>
-                          <td className="p-4">
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </td>
+                           <td className="p-4">
+                             <div className="flex gap-2">
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => handleEditStock(variant)}
+                               >
+                                 <Edit className="h-3 w-3" />
+                               </Button>
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => handleDeleteStock(variant.id, variant.products.nom)}
+                                 disabled={deleteStockMutation.isPending}
+                               >
+                                 <Trash2 className="h-3 w-3" />
+                               </Button>
+                             </div>
+                           </td>
                         </tr>
                       );
                     })
@@ -375,6 +561,93 @@ export default function InventoryPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Stock Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Modifier le stock - {editingStock?.products.nom}
+            </DialogTitle>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitStock)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="stock_on_hand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock en main</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reserved"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock réservé</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="min_stock_level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Seuil minimum</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowEditDialog(false)}
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={updateStockMutation.isPending}
+                >
+                  {updateStockMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
