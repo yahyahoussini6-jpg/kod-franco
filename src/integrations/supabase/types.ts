@@ -292,9 +292,10 @@ export type Database = {
       v_overview_daily: {
         Row: {
           d: string | null
-          delivered_aov: number | null
           delivered_orders: number | null
           delivered_revenue: number | null
+          total_gmv: number | null
+          total_orders: number | null
         }
         Relationships: []
       }
