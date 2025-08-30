@@ -34,7 +34,7 @@ import {
 
 export default function ShippingPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCarrier, setSelectedCarrier] = useState('');
+  const [selectedCarrier, setSelectedCarrier] = useState('all');
   const [selectedZone, setSelectedZone] = useState('');
   const [showCarrierDialog, setShowCarrierDialog] = useState(false);
   const [showZoneDialog, setShowZoneDialog] = useState(false);
@@ -227,7 +227,7 @@ export default function ShippingPage() {
 
   const filteredZones = zones?.filter(zone => {
     const matchesSearch = zone.zone_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCarrier = selectedCarrier === '' || zone.carrier_id === selectedCarrier;
+    const matchesCarrier = selectedCarrier === 'all' || zone.carrier_id === selectedCarrier;
     return matchesSearch && matchesCarrier;
   });
 
@@ -491,7 +491,7 @@ export default function ShippingPage() {
                     <SelectValue placeholder="Transporteur" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tous les transporteurs</SelectItem>
+                    <SelectItem value="all">Tous les transporteurs</SelectItem>
                     {carriers?.map((carrier) => (
                       <SelectItem key={carrier.id} value={carrier.id}>
                         {carrier.name}
