@@ -28,6 +28,8 @@ import AdminReturns from "./pages/admin/Returns";
 import AdminFinance from "./pages/admin/Finance";
 import AdminShipping from "./pages/admin/Shipping";
 import SystemPage from "./pages/admin/System";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +74,12 @@ function Navigation() {
             </Link>
             <Link to="/suivi-commande" className="text-muted-foreground hover:text-foreground transition-colors">
               Suivi commande
+            </Link>
+            <Link to="/a-propos" className="text-muted-foreground hover:text-foreground transition-colors">
+              À propos
+            </Link>
+            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+              Contact
             </Link>
           </div>
 
@@ -137,6 +145,20 @@ function Navigation() {
               >
                 Suivi commande
               </Link>
+              <Link 
+                to="/a-propos" 
+                className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                À propos
+              </Link>
+              <Link 
+                to="/contact" 
+                className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
               
               <div className="flex items-center justify-between pt-4 border-t">
                 <div className="flex items-center gap-2">
@@ -187,6 +209,8 @@ const App = () => (
                   <Route path="/panier" element={<Cart />} />
                   <Route path="/suivi-commande" element={<TrackOrder />} />
                   <Route path="/confirmation/:code" element={<Confirmation />} />
+                  <Route path="/a-propos" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
