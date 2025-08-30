@@ -3,12 +3,46 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { BarChart3, Package, ShoppingCart, LogOut, Home } from 'lucide-react';
+import { 
+  BarChart3, 
+  Package, 
+  ShoppingCart, 
+  LogOut, 
+  Home,
+  Warehouse,
+  UserCheck,
+  RotateCcw,
+  Calculator,
+  Truck,
+  Settings,
+  Database,
+  TestTube
+} from 'lucide-react';
 
 const navigation = [
   { name: 'Analytics', href: '/admin', icon: BarChart3, exact: true },
-  { name: 'Produits', href: '/admin/products', icon: Package },
   { name: 'Commandes', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Produits', href: '/admin/products', icon: Package },
+  { 
+    name: 'Operations', 
+    type: 'section',
+    items: [
+      { name: 'Inventaire', href: '/admin/inventory', icon: Warehouse },
+      { name: 'Clients (CRM)', href: '/admin/clients', icon: UserCheck },
+      { name: 'Retours/RTO', href: '/admin/returns', icon: RotateCcw },
+      { name: 'Finance', href: '/admin/finance', icon: Calculator },
+      { name: 'Expédition', href: '/admin/shipping', icon: Truck },
+    ]
+  },
+  { 
+    name: 'Système', 
+    type: 'section',
+    items: [
+      { name: 'Paramètres', href: '/admin/settings', icon: Settings },
+      { name: 'Données', href: '/admin/data', icon: Database },
+      { name: 'Expérimentations', href: '/admin/experiments', icon: TestTube },
+    ]
+  }
 ];
 
 export default function AdminLayout() {
