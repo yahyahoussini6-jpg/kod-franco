@@ -13,7 +13,7 @@ import { CheckoutModal } from '@/components/CheckoutModal';
 import ModelViewer3D from '@/components/ModelViewer3D';
 import { formatPrice } from '@/lib/format';
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -64,7 +64,7 @@ export default function ProductDetail() {
   };
 
   const handleWhatsApp = () => {
-    if (!product || !WHATSAPP_NUMBER) return;
+    if (!product) return;
     
     // Build detailed product information
     let productDetails = `🛍️ *${product.nom}*\n`;
@@ -298,17 +298,15 @@ export default function ProductDetail() {
                 Ajouter au panier
               </Button>
 
-              {WHATSAPP_NUMBER && (
-                <Button
-                  onClick={handleWhatsApp}
-                  variant="secondary"
-                  size="lg"
-                  className="w-full h-12 text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
-                >
-                  <MessageCircle className="mr-2 h-5 w-5" />
-                  Commander via WhatsApp
-                </Button>
-              )}
+              <Button
+                onClick={handleWhatsApp}
+                variant="secondary"
+                size="lg"
+                className="w-full h-12 text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+              >
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Commander via WhatsApp
+              </Button>
             </div>
           </div>
         </div>
