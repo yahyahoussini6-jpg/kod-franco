@@ -245,14 +245,29 @@ export default function AdminOrders() {
                 <h4 className="font-semibold mb-3">Articles commandés</h4>
                 <div className="space-y-2">
                   {selectedOrder.order_items?.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                      <div>
+                    <div key={index} className="flex justify-between items-start py-3 border-b last:border-b-0">
+                      <div className="flex-1">
                         <p className="font-medium">{item.product_nom}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Quantité: {item.quantite}
-                        </p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground">
+                            Quantité: {item.quantite}
+                          </span>
+                          {item.variables && Object.keys(item.variables).length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(item.variables).map(([key, value]) => (
+                                value && (
+                                  <Badge key={key} variant="outline" className="text-xs">
+                                    {key === 'color' ? 'Couleur' : 
+                                     key === 'size' ? 'Taille' : 
+                                     key.charAt(0).toUpperCase() + key.slice(1)}: {String(value)}
+                                  </Badge>
+                                )
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-4">
                         <p className="font-semibold">
                           {formatPrice(item.product_prix * item.quantite)}
                         </p>
