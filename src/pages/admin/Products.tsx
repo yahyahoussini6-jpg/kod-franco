@@ -65,9 +65,12 @@ export default function AdminProducts() {
 
     const { error: uploadError } = await supabase.storage
       .from('models')
-      .upload(filePath, file);
+      .upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Model upload error:', uploadError);
+      throw uploadError;
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from('models')
@@ -85,9 +88,12 @@ export default function AdminProducts() {
 
       const { error: uploadError } = await supabase.storage
         .from('models')
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Image upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('models')
@@ -173,9 +179,10 @@ export default function AdminProducts() {
       form.reset();
     },
     onError: (error) => {
+      console.error('Product save error:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de sauvegarder le produit',
+        description: (error as any)?.message || 'Impossible de sauvegarder le produit',
         variant: 'destructive',
       });
     },
