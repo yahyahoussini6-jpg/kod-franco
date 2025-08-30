@@ -250,7 +250,14 @@ export default function InventoryPage() {
   };
 
   const handleExport = () => {
-    if (!inventory) return;
+    if (!inventory || inventory.length === 0) {
+      toast({
+        title: 'Aucune donnée à exporter',
+        description: 'L\'inventaire est vide',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     const csvData = inventory.map(variant => {
       const stock = variant.inventory?.[0];
@@ -267,9 +274,19 @@ export default function InventoryPage() {
       };
     });
     
+    if (csvData.length === 0) {
+      toast({
+        title: 'Aucune donnée à exporter',
+        description: 'Aucun produit trouvé',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const headers = Object.keys(csvData[0]);
     const csv = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => row[header as keyof typeof row]).join(','))
     ].join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -281,6 +298,7 @@ export default function InventoryPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     toast({
       title: 'Export réussi',
@@ -402,13 +420,19 @@ export default function InventoryPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Apply search filter
+              setSearchTerm(searchTerm);
+            }}>
               <Search className="mr-2 h-4 w-4" />
               Rechercher
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {
+              // Clear all filters
+              setSearchTerm('');
+            }}>
               <Filter className="mr-2 h-4 w-4" />
-              Filtres
+              Effacer filtres
             </Button>
           </div>
 
