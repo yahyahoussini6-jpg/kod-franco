@@ -53,21 +53,21 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Service Client</h4>
             <nav className="flex flex-col space-y-2">
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 FAQ
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/politique-retour" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Politique de retour
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/livraison" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Livraison
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/conditions-utilisation" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Conditions d'utilisation
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/politique-confidentialite" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Politique de confidentialité
-              </a>
+              </Link>
             </nav>
           </div>
 

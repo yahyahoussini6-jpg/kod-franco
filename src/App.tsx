@@ -30,6 +30,11 @@ import AdminShipping from "./pages/admin/Shipping";
 import SystemPage from "./pages/admin/System";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import Shipping from "./pages/Shipping";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -211,6 +216,11 @@ const App = () => (
                   <Route path="/confirmation/:code" element={<Confirmation />} />
                   <Route path="/a-propos" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/politique-retour" element={<ReturnPolicy />} />
+                  <Route path="/livraison" element={<Shipping />} />
+                  <Route path="/conditions-utilisation" element={<TermsOfService />} />
+                  <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
