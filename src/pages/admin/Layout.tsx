@@ -40,9 +40,7 @@ const navigation = [
     name: 'Système', 
     type: 'section',
     items: [
-      { name: 'Paramètres', href: '/admin/settings', icon: Settings },
-      { name: 'Données', href: '/admin/data', icon: Database },
-      { name: 'Expérimentations', href: '/admin/experiments', icon: TestTube },
+      { name: 'Administration', href: '/admin/system', icon: Settings },
     ]
   }
 ];

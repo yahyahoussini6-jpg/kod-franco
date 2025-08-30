@@ -26,6 +26,7 @@ import AdminClients from "./pages/admin/Clients";
 import AdminReturns from "./pages/admin/Returns";
 import AdminFinance from "./pages/admin/Finance";
 import AdminShipping from "./pages/admin/Shipping";
+import SystemPage from "./pages/admin/System";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -123,6 +124,7 @@ const App = () => (
                   <Route path="returns" element={<AdminReturns />} />
                   <Route path="finance" element={<AdminFinance />} />
                   <Route path="shipping" element={<AdminShipping />} />
+                  <Route path="system" element={<SystemPage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
