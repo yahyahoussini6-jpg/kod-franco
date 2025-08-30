@@ -1,20 +1,138 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
-  Warehouse, 
-  AlertTriangle, 
   Package, 
-  Plus,
+  AlertTriangle, 
+  TrendingDown, 
+  BarChart3,
   Search,
   Filter,
   Download,
-  Upload
+  Plus,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 export default function InventoryPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
+
+  // Fetch product variants and inventory
+  const { data: inventory, isLoading } = useQuery({
+    queryKey: ['admin-inventory'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_variants')
+        .select(`
+          *,
+          products!inner(nom, description),
+          inventory(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch stock movements
+  const { data: movements } = useQuery({
+    queryKey: ['stock-movements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stock_movements')
+        .select(`
+          *,
+          product_variants!inner(name, sku, products!inner(nom))
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    if (!inventory) return { totalSKUs: 0, totalStock: 0, lowStock: 0, stockValue: 0 };
+    
+    let totalStock = 0;
+    let lowStock = 0;
+    let stockValue = 0;
+    
+    inventory.forEach(variant => {
+      const stock = variant.inventory?.[0];
+      if (stock) {
+        totalStock += stock.stock_on_hand;
+        stockValue += stock.stock_on_hand * variant.cost;
+        if (stock.stock_on_hand <= stock.min_stock_level) {
+          lowStock++;
+        }
+      }
+    });
+    
+    return {
+      totalSKUs: inventory.length,
+      totalStock,
+      lowStock,
+      stockValue
+    };
+  }, [inventory]);
+
+  const filteredInventory = React.useMemo(() => {
+    if (!inventory) return [];
+    return inventory.filter(variant => 
+      variant.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      variant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      variant.products.nom.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [inventory, searchTerm]);
+
+  const getStockStatus = (stock_on_hand: number, min_stock_level: number) => {
+    if (stock_on_hand === 0) return { label: 'Rupture', variant: 'secondary' as const };
+    if (stock_on_hand <= min_stock_level) return { label: 'Stock Faible', variant: 'destructive' as const };
+    return { label: 'En Stock', variant: 'default' as const };
+  };
+
+  const formatMovementType = (type: string) => {
+    const types = {
+      'in': 'Entrée stock',
+      'out': 'Sortie stock',
+      'adjustment': 'Ajustement',
+      'reserved': 'Réservé',
+      'unreserved': 'Déréservé'
+    };
+    return types[type as keyof typeof types] || type;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Inventaire & Stocks</h1>
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="h-16 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -22,21 +140,17 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-3xl font-bold">Inventaire & Stocks</h1>
           <p className="text-muted-foreground">
-            Gestion des stocks, SKU/variants, et alertes de stock bas
+            Gestion des SKU, variants, niveaux de stock et alertes
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Import
-          </Button>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Nouveau SKU
+            Nouveau Produit
           </Button>
         </div>
       </div>
@@ -49,9 +163,9 @@ export default function InventoryPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">{stats.totalSKUs.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              +12% vs mois dernier
+              Variantes produits
             </p>
           </CardContent>
         </Card>
@@ -59,10 +173,10 @@ export default function InventoryPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Total</CardTitle>
-            <Warehouse className="h-4 w-4 text-muted-foreground" />
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45,678</div>
+            <div className="text-2xl font-bold">{stats.totalStock.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Unités en stock
             </p>
@@ -71,13 +185,13 @@ export default function InventoryPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bas</CardTitle>
+            <CardTitle className="text-sm font-medium">Stock Faible</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">23</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.lowStock}</div>
             <p className="text-xs text-muted-foreground">
-              SKUs nécessitent réapprovisionnement
+              Articles sous seuil
             </p>
           </CardContent>
         </Card>
@@ -85,12 +199,12 @@ export default function InventoryPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valeur Stock</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,345,678 MAD</div>
+            <div className="text-2xl font-bold">{stats.stockValue.toLocaleString()} MAD</div>
             <p className="text-xs text-muted-foreground">
-              Valeur totale du stock
+              Prix d'achat total
             </p>
           </CardContent>
         </Card>
@@ -99,7 +213,7 @@ export default function InventoryPage() {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Inventaire</CardTitle>
+          <CardTitle>Gestion Stock</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-6">
@@ -107,6 +221,8 @@ export default function InventoryPage() {
               <Input 
                 placeholder="Rechercher SKU, nom produit..." 
                 className="w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline">
@@ -127,58 +243,62 @@ export default function InventoryPage() {
                   <tr>
                     <th className="text-left p-4 font-medium">SKU</th>
                     <th className="text-left p-4 font-medium">Produit</th>
-                    <th className="text-left p-4 font-medium">Catégorie</th>
-                    <th className="text-left p-4 font-medium">Stock</th>
+                    <th className="text-left p-4 font-medium">En Stock</th>
                     <th className="text-left p-4 font-medium">Réservé</th>
-                    <th className="text-left p-4 font-medium">Entrant</th>
-                    <th className="text-left p-4 font-medium">Status</th>
+                    <th className="text-left p-4 font-medium">Disponible</th>
+                    <th className="text-left p-4 font-medium">Seuil Min</th>
+                    <th className="text-left p-4 font-medium">Prix Achat</th>
+                    <th className="text-left p-4 font-medium">Statut</th>
                     <th className="text-left p-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Sample data */}
-                  <tr className="border-t">
-                    <td className="p-4 font-mono text-sm">SKU-001</td>
-                    <td className="p-4">Chaussures Sport Nike</td>
-                    <td className="p-4">Chaussures</td>
-                    <td className="p-4">124</td>
-                    <td className="p-4">12</td>
-                    <td className="p-4">50</td>
-                    <td className="p-4">
-                      <Badge variant="default">En stock</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4 font-mono text-sm">SKU-002</td>
-                    <td className="p-4">T-shirt Coton Bio</td>
-                    <td className="p-4">Vêtements</td>
-                    <td className="p-4">5</td>
-                    <td className="p-4">2</td>
-                    <td className="p-4">0</td>
-                    <td className="p-4">
-                      <Badge variant="destructive">Stock bas</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-4 font-mono text-sm">SKU-003</td>
-                    <td className="p-4">Sac à Dos Voyage</td>
-                    <td className="p-4">Accessoires</td>
-                    <td className="p-4">0</td>
-                    <td className="p-4">0</td>
-                    <td className="p-4">25</td>
-                    <td className="p-4">
-                      <Badge variant="secondary">Rupture</Badge>
-                    </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">Voir</Button>
-                    </td>
-                  </tr>
+                  {filteredInventory.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                        Aucun produit trouvé
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredInventory.map((variant) => {
+                      const stock = variant.inventory?.[0];
+                      const stockOnHand = stock?.stock_on_hand || 0;
+                      const reserved = stock?.reserved || 0;
+                      const available = stockOnHand - reserved;
+                      const minStock = stock?.min_stock_level || 0;
+                      const status = getStockStatus(stockOnHand, minStock);
+
+                      return (
+                        <tr key={variant.id} className="border-t">
+                          <td className="p-4 font-mono text-sm">{variant.sku}</td>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">{variant.products.nom}</p>
+                              <p className="text-sm text-muted-foreground">{variant.name}</p>
+                            </div>
+                          </td>
+                          <td className="p-4">{stockOnHand}</td>
+                          <td className="p-4">{reserved}</td>
+                          <td className="p-4">{available}</td>
+                          <td className="p-4">{minStock}</td>
+                          <td className="p-4">{variant.cost} MAD</td>
+                          <td className="p-4">
+                            <Badge variant={status.variant}>{status.label}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -186,36 +306,75 @@ export default function InventoryPage() {
         </CardContent>
       </Card>
 
-      {/* Stock Adjustment Log */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Journal des Ajustements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="font-medium">SKU-001 - Ajustement manuel</p>
-                <p className="text-sm text-muted-foreground">+20 unités ajoutées</p>
+      {/* Recent Movements */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Mouvements Récents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {movements?.length === 0 ? (
+                <p className="text-center text-muted-foreground">Aucun mouvement récent</p>
+              ) : (
+                movements?.map((movement) => (
+                  <div key={movement.id} className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{movement.product_variants.sku}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatMovementType(movement.movement_type)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-medium ${
+                        movement.quantity > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(movement.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Alertes Stock</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                <div>
+                  <p className="font-medium">{stats.lowStock} articles en stock faible</p>
+                  <p className="text-sm text-muted-foreground">Seuil minimum atteint</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Il y a 2h</p>
-                <p className="text-sm">Par: admin@store.com</p>
+              <div className="flex items-center space-x-3">
+                <Package className="h-4 w-4 text-red-500" />
+                <div>
+                  <p className="font-medium">
+                    {filteredInventory.filter(v => (v.inventory?.[0]?.stock_on_hand || 0) === 0).length} articles en rupture
+                  </p>
+                  <p className="text-sm text-muted-foreground">Stock épuisé</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <TrendingDown className="h-4 w-4 text-blue-500" />
+                <div>
+                  <p className="font-medium">Stock surveillé automatiquement</p>
+                  <p className="text-sm text-muted-foreground">Alertes en temps réel</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="font-medium">SKU-002 - Réception commande</p>
-                <p className="text-sm text-muted-foreground">+100 unités reçues</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Hier</p>
-                <p className="text-sm">Par: system</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

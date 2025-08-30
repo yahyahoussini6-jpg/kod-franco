@@ -1,20 +1,133 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   RotateCcw, 
-  Package, 
-  AlertTriangle, 
-  DollarSign,
+  Truck, 
+  DollarSign, 
+  AlertCircle,
   Search,
   Filter,
   Download,
-  RefreshCw
+  Eye,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Package,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function ReturnsPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
+
+  // Fetch returns data
+  const { data: returns, isLoading } = useQuery({
+    queryKey: ['admin-returns'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('returns')
+        .select(`
+          *,
+          orders(client_nom, code_suivi, order_total),
+          customer_profiles(full_name, phone)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    if (!returns) return { totalReturns: 0, rtoValue: 0, processedReturns: 0, refunded: 0 };
+    
+    const totalReturns = returns.length;
+    const rtoValue = returns
+      .filter(r => r.return_type === 'rto')
+      .reduce((sum, r) => sum + Number(r.return_value || 0), 0);
+    const processedReturns = returns.filter(r => r.status === 'processed').length;
+    const refunded = returns
+      .filter(r => r.status === 'refunded')
+      .reduce((sum, r) => sum + Number(r.refund_amount || 0), 0);
+    
+    return { totalReturns, rtoValue, processedReturns, refunded };
+  }, [returns]);
+
+  const updateReturnStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from('returns')
+        .update({ status, processed_at: status === 'processed' ? new Date().toISOString() : null })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-returns'] });
+    }
+  });
+
+  const filteredReturns = React.useMemo(() => {
+    if (!returns) return [];
+    return returns.filter(returnItem => 
+      returnItem.return_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (returnItem.orders?.client_nom || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (returnItem.orders?.code_suivi || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [returns, searchTerm]);
+
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'initiated': { label: 'Initié', variant: 'secondary' as const },
+      'in_transit': { label: 'En Transit', variant: 'default' as const },
+      'received': { label: 'Reçu', variant: 'default' as const },
+      'processed': { label: 'Traité', variant: 'default' as const },
+      'refunded': { label: 'Remboursé', variant: 'default' as const },
+      'restocked': { label: 'Remis en Stock', variant: 'default' as const },
+      'disposed': { label: 'Éliminé', variant: 'destructive' as const }
+    };
+    return statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
+  };
+
+  const getReturnTypeBadge = (type: string) => {
+    const typeMap = {
+      'return': { label: 'Retour', variant: 'default' as const },
+      'rto': { label: 'RTO', variant: 'destructive' as const },
+      'exchange': { label: 'Échange', variant: 'secondary' as const },
+      'refund': { label: 'Remboursement', variant: 'default' as const }
+    };
+    return typeMap[type as keyof typeof typeMap] || { label: type, variant: 'secondary' as const };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">RTO / Annulations</h1>
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="h-16 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

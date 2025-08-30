@@ -1,20 +1,130 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { 
-  Calculator, 
   DollarSign, 
-  Receipt, 
-  TrendingUp,
+  TrendingUp, 
+  Calculator, 
+  Receipt,
   Search,
   Filter,
   Download,
+  CreditCard,
+  Banknote,
+  Target,
   FileText
 } from 'lucide-react';
 
 export default function FinancePage() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch financial transactions
+  const { data: transactions, isLoading } = useQuery({
+    queryKey: ['admin-financial-transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select(`
+          *,
+          orders(client_nom, code_suivi),
+          customer_profiles(full_name, phone)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch orders for revenue calculation
+  const { data: orders } = useQuery({
+    queryKey: ['admin-orders-finance'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'livree');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Calculate financial stats
+  const stats = React.useMemo(() => {
+    if (!orders || !transactions) return { revenue: 0, profit: 0, codFees: 0, pending: 0 };
+    
+    const revenue = orders.reduce((sum, order) => sum + Number(order.order_total || 0), 0);
+    const codFees = orders.reduce((sum, order) => sum + Number(order.cod_fee || 0), 0);
+    const costs = orders.reduce((sum, order) => 
+      sum + Number(order.cogs_total || 0) + Number(order.shipping_cost || 0), 0);
+    const profit = revenue - costs - codFees;
+    
+    const pending = transactions
+      .filter(t => t.status === 'pending')
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    
+    return { revenue, profit, codFees, pending };
+  }, [orders, transactions]);
+
+  const filteredTransactions = React.useMemo(() => {
+    if (!transactions) return [];
+    return transactions.filter(transaction => 
+      transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (transaction.orders?.client_nom || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [transactions, searchTerm]);
+
+  const getTransactionTypeBadge = (type: string) => {
+    const typeMap = {
+      'sale': { label: 'Vente', variant: 'default' as const },
+      'refund': { label: 'Remboursement', variant: 'destructive' as const },
+      'cod_fee': { label: 'Frais COD', variant: 'secondary' as const },
+      'shipping_fee': { label: 'Frais Livraison', variant: 'secondary' as const },
+      'discount': { label: 'Remise', variant: 'secondary' as const },
+      'cost': { label: 'Coût', variant: 'destructive' as const }
+    };
+    return typeMap[type as keyof typeof typeMap] || { label: type, variant: 'secondary' as const };
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'pending': { label: 'En Attente', variant: 'secondary' as const },
+      'completed': { label: 'Complété', variant: 'default' as const },
+      'failed': { label: 'Échoué', variant: 'destructive' as const },
+      'cancelled': { label: 'Annulé', variant: 'secondary' as const }
+    };
+    return statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Finance</h1>
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="h-16 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
