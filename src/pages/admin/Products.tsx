@@ -428,11 +428,11 @@ export default function AdminProducts() {
 
                     {/* 3D Model Upload */}
                     <div className="space-y-2">
-                      <FormLabel>Modèle 3D (.obj)</FormLabel>
+                      <FormLabel>Modèle 3D (.glb)</FormLabel>
                       <div className="flex items-center gap-2">
                         <Input
                           type="file"
-                          accept=".obj"
+                          accept=".glb"
                           onChange={(e) => setModelFile(e.target.files?.[0] || null)}
                           className="flex-1"
                         />

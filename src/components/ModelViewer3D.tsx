@@ -1,24 +1,23 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { OBJLoader } from 'three-stdlib';
+import { GLTFLoader } from 'three-stdlib';
 
 interface ModelViewer3DProps {
-  urlObj: string;
-  urlMtl?: string;
+  urlGlb: string;
 }
 
-function Model({ urlObj, onError, onLoad }: { urlObj: string; onError: (error: any) => void; onLoad: () => void }) {
-  const [obj, setObj] = useState<any>(null);
+function Model({ urlGlb, onError, onLoad }: { urlGlb: string; onError: (error: any) => void; onLoad: () => void }) {
+  const [gltf, setGltf] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loader = new OBJLoader();
+    const loader = new GLTFLoader();
     
-    console.log('Loading 3D model from:', urlObj);
+    console.log('Loading 3D model from:', urlGlb);
     
     // First check if the URL is accessible
-    fetch(urlObj, { method: 'HEAD' })
+    fetch(urlGlb, { method: 'HEAD' })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -26,10 +25,10 @@ function Model({ urlObj, onError, onLoad }: { urlObj: string; onError: (error: a
         console.log('Model URL is accessible, loading...');
         
         loader.load(
-          urlObj,
-          (loadedObj) => {
-            console.log('3D model loaded successfully:', loadedObj);
-            setObj(loadedObj);
+          urlGlb,
+          (loadedGltf) => {
+            console.log('3D model loaded successfully:', loadedGltf);
+            setGltf(loadedGltf);
             setIsLoading(false);
             onLoad();
           },
@@ -48,7 +47,7 @@ function Model({ urlObj, onError, onLoad }: { urlObj: string; onError: (error: a
         setIsLoading(false);
         onError(error);
       });
-  }, [urlObj, onError, onLoad]);
+  }, [urlGlb, onError, onLoad]);
 
   if (isLoading) {
     return (
@@ -59,12 +58,12 @@ function Model({ urlObj, onError, onLoad }: { urlObj: string; onError: (error: a
     );
   }
 
-  if (!obj) return null;
+  if (!gltf) return null;
 
-  return <primitive object={obj} scale={[2, 2, 2]} position={[0, 0, 0]} />;
+  return <primitive object={gltf.scene} scale={[2, 2, 2]} position={[0, 0, 0]} />;
 }
 
-function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
+function ModelViewer3D({ urlGlb }: ModelViewer3DProps) {
   const [error, setError] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +77,7 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
     setLoading(false);
   };
 
-  if (!urlObj) {
+  if (!urlGlb) {
     return (
       <div className="h-[480px] w-full border rounded-lg overflow-hidden bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Aucun modèle 3D disponible</div>
@@ -92,13 +91,13 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
         <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2 p-4">
           <div className="font-semibold">Impossible de charger le modèle 3D</div>
           <div className="text-sm opacity-75 text-center">
-            {error?.message || 'Vérifiez que le fichier .obj est valide et accessible'}
+            {error?.message || 'Vérifiez que le fichier .glb est valide et accessible'}
           </div>
           <div className="text-xs opacity-50 max-w-xs text-center break-all">
-            URL: {urlObj}
+            URL: {urlGlb}
           </div>
           <button 
-            onClick={() => window.open(urlObj, '_blank')} 
+            onClick={() => window.open(urlGlb, '_blank')} 
             className="text-xs underline opacity-75 hover:opacity-100"
           >
             Tester l'URL directement
@@ -114,7 +113,7 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
           <div className="w-full h-full">
             <Canvas 
               camera={{ position: [0, 0, 5], fov: 50 }}
-              onCreated={() => console.log('Canvas created, loading model:', urlObj)}
+              onCreated={() => console.log('Canvas created, loading model:', urlGlb)}
               style={{ 
                 width: '100%', 
                 height: '100%',
@@ -136,7 +135,7 @@ function ModelViewer3D({ urlObj }: ModelViewer3DProps) {
                   </mesh>
                 }
               >
-                <Model urlObj={urlObj} onError={handleError} onLoad={handleLoad} />
+                <Model urlGlb={urlGlb} onError={handleError} onLoad={handleLoad} />
               </Suspense>
               <OrbitControls 
                 enableZoom={true} 

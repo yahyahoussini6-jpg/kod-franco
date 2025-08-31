@@ -321,7 +321,7 @@ export default function ProductDetail() {
               </p>
             </div>
             <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-6 shadow-lg">
-              <ModelViewer3D urlObj={product.model_url} />
+              <ModelViewer3D urlGlb={product.model_url} />
             </div>
           </div>
         )}
