@@ -22,13 +22,35 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: allProductsData, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          categories (
+            id,
+            name
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -58,9 +80,13 @@ export default function Products() {
         (stockFilter === 'in-stock' && product.en_stock) ||
         (stockFilter === 'out-of-stock' && !product.en_stock);
       
-      return matchesSearch && matchesPrice && matchesStock;
+      // Category filter
+      const matchesCategory = categoryFilter === 'all' || 
+        product.category_id === categoryFilter;
+      
+      return matchesSearch && matchesPrice && matchesStock && matchesCategory;
     });
-  }, [allProductsData, searchTerm, priceRange, stockFilter]);
+  }, [allProductsData, searchTerm, priceRange, stockFilter, categoryFilter]);
 
   // Pagination for filtered products
   const totalCount = filteredProducts.length;
@@ -71,12 +97,13 @@ export default function Products() {
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, priceRange, stockFilter]);
+  }, [searchTerm, priceRange, stockFilter, categoryFilter]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setPriceRange('all');
     setStockFilter('all');
+    setCategoryFilter('all');
   };
 
 
@@ -125,14 +152,28 @@ export default function Products() {
             variant="outline" 
             onClick={clearFilters}
             className="sm:w-auto"
-            disabled={!searchTerm && priceRange === 'all' && stockFilter === 'all'}
+            disabled={!searchTerm && priceRange === 'all' && stockFilter === 'all' && categoryFilter === 'all'}
           >
             <Filter className="h-4 w-4 mr-2" />
             Effacer les filtres
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les catégories</SelectItem>
+              {categories?.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={priceRange} onValueChange={setPriceRange}>
             <SelectTrigger>
               <SelectValue placeholder="Prix" />

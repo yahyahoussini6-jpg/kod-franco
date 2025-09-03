@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
@@ -23,6 +24,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   prix: z.number().min(0, 'Le prix doit être positif'),
   en_stock: z.boolean(),
+  category_id: z.string().optional(),
   variables: z.object({
     colors: z.array(z.string()).optional(),
     sizes: z.array(z.string()).optional(),
@@ -50,6 +52,7 @@ export default function AdminProducts() {
       description: '',
       prix: 0,
       en_stock: true,
+      category_id: '',
       variables: {
         colors: [],
         sizes: [],
@@ -105,13 +108,34 @@ export default function AdminProducts() {
     return Promise.all(uploadPromises);
   };
 
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          categories (
+            id,
+            name
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -145,6 +169,7 @@ export default function AdminProducts() {
           description: data.description,
           prix: data.prix,
           en_stock: data.en_stock,
+          category_id: data.category_id || null,
           variables: data.variables || {},
           model_url: modelUrl,
           media: mediaArray,
@@ -221,6 +246,7 @@ export default function AdminProducts() {
       description: product.description || '',
       prix: product.prix,
       en_stock: product.en_stock,
+      category_id: product.category_id || '',
       variables: product.variables || { colors: [], sizes: [] },
     });
     setShowDialog(true);
@@ -368,6 +394,32 @@ export default function AdminProducts() {
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="category_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Catégorie</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une catégorie" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Aucune catégorie</SelectItem>
+                              {categories?.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -585,6 +637,11 @@ export default function AdminProducts() {
                 <CardTitle className="text-lg">{product.nom}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {(product as any).categories && (
+                  <Badge variant="outline" className="mb-2">
+                    {(product as any).categories.name}
+                  </Badge>
+                )}
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {product.description || 'Aucune description'}
                 </p>

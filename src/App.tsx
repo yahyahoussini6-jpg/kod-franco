@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import AdminLayout from "./pages/admin/Layout";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminProducts from "./pages/admin/Products";
+import AdminCategories from "./pages/admin/Categories";
 import AdminOrders from "./pages/admin/Orders";
 import AdminInventory from "./pages/admin/Inventory";
 import AdminClients from "./pages/admin/Clients";
@@ -225,6 +226,7 @@ const App = () => (
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
                     <Route path="products" element={<AdminProducts />} />
+                    <Route path="categories" element={<AdminCategories />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="inventory" element={<AdminInventory />} />
                     <Route path="clients" element={<AdminClients />} />

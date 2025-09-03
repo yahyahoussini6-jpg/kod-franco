@@ -25,6 +25,7 @@ const navigation = [
   { name: 'Analytics', href: '/admin', icon: BarChart3, exact: true },
   { name: 'Commandes', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Produits', href: '/admin/products', icon: Package },
+  { name: 'Catégories', href: '/admin/categories', icon: Database },
   { 
     name: 'Operations', 
     type: 'section',
