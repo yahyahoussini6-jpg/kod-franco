@@ -170,7 +170,7 @@ export default function AdminProducts() {
           description: data.description,
           prix: data.prix,
           en_stock: data.en_stock,
-          category_id: data.category_id || null,
+          category_id: data.category_id === 'none' ? null : data.category_id || null,
           variables: data.variables || {},
           model_url: modelUrl,
           media: mediaArray,
@@ -418,7 +418,7 @@ export default function AdminProducts() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Aucune catégorie</SelectItem>
+                              <SelectItem value="none">Aucune catégorie</SelectItem>
                               {categories?.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
