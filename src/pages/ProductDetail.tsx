@@ -295,9 +295,10 @@ export default function ProductDetail() {
                 <div className="prose prose-sm max-w-none">
                   <div className="p-6 bg-card/50 rounded-xl border">
                     <h3 className="text-lg font-semibold mb-3 text-foreground">Description du produit</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {product.description}
-                    </p>
+                    <div 
+                      className="text-muted-foreground leading-relaxed prose prose-sm prose-gray dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
                   </div>
                 </div>
               )}
