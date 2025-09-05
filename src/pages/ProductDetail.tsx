@@ -141,8 +141,8 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16">
           {/* Left Column - Enhanced Image Gallery */}
           <div className="order-1">
             {images.length > 0 ? (
@@ -174,14 +174,14 @@ export default function ProductDetail() {
                 
                 {/* Enhanced Thumbnail Gallery */}
                 {images.length > 1 && (
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide px-1">
                     {images.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg border-2 overflow-hidden transition-all duration-300 ${
+                        className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg border-2 overflow-hidden transition-all duration-300 ${
                           currentImageIndex === index 
-                            ? 'border-primary shadow-lg ring-4 ring-primary/20 scale-105' 
+                            ? 'border-primary shadow-lg ring-2 sm:ring-4 ring-primary/20 scale-105' 
                             : 'border-muted hover:border-primary/50 hover:shadow-md'
                         }`}
                       >
@@ -244,20 +244,20 @@ export default function ProductDetail() {
               </div>
 
               <div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
                   {product.nom}
                 </h1>
                 
                 {/* Enhanced Price Display */}
-                <div className="mt-4 p-6 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 rounded-xl border border-primary/20">
-                  <div className="flex items-baseline justify-between">
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-4xl md:text-5xl font-bold text-primary">
+                <div className="mt-4 p-4 sm:p-6 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 rounded-xl border border-primary/20">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                    <div className="flex items-baseline gap-2 sm:gap-3">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">
                         {formatPrice(product.prix)}
                       </span>
-                      <span className="text-muted-foreground text-base">TTC</span>
+                      <span className="text-muted-foreground text-sm sm:text-base">TTC</span>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <div className="text-sm text-muted-foreground line-through">
                         {formatPrice(Math.round(product.prix * 1.3))}
                       </div>
@@ -320,7 +320,7 @@ export default function ProductDetail() {
                       )}
                     </div>
                     <RadioGroup value={selectedColor} onValueChange={setSelectedColor}>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {colors.map((color: string) => (
                           <div key={color} className="flex items-center space-x-2">
                             <RadioGroupItem value={color} id={`color-${color}`} />
@@ -352,7 +352,7 @@ export default function ProductDetail() {
                       )}
                     </div>
                     <RadioGroup value={selectedSize} onValueChange={setSelectedSize}>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {sizes.map((size: string) => (
                           <div key={size} className="flex items-center space-x-2">
                             <RadioGroupItem value={size} id={`size-${size}`} />
@@ -377,35 +377,37 @@ export default function ProductDetail() {
             {/* Enhanced Action Buttons */}
             <div className="space-y-4 pt-6">
               {/* Sticky CTA Container */}
-              <div className="bg-gradient-to-r from-card via-card/95 to-card rounded-xl p-6 border-2 border-primary/20 shadow-xl">
+              <div className="bg-gradient-to-r from-card via-card/95 to-card rounded-xl p-4 sm:p-6 border-2 border-primary/20 shadow-xl">
                 <Button
                   onClick={handleBuyNow}
                   size="lg"
-                  className="w-full h-16 text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transform hover:scale-[1.02]"
+                  className="w-full h-12 sm:h-16 text-lg sm:text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transform hover:scale-[1.02]"
                   disabled={!product.en_stock}
                 >
-                  🚀 Acheter maintenant - Livraison 24h
+                  <span className="hidden sm:inline">🚀 Acheter maintenant - Livraison 24h</span>
+                  <span className="sm:hidden">🚀 Acheter maintenant</span>
                 </Button>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                   <Button
                     onClick={handleAddToCart}
                     variant="outline"
                     size="lg"
-                    className="h-12 text-base border-2 hover:bg-muted/50 font-semibold"
+                    className="h-10 sm:h-12 text-sm sm:text-base border-2 hover:bg-muted/50 font-semibold"
                     disabled={!product.en_stock}
                   >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Ajouter au panier
+                    <ShoppingCart className="mr-1 sm:mr-2 h-4 sm:h-5 w-4 sm:w-5" />
+                    <span className="hidden sm:inline">Ajouter au panier</span>
+                    <span className="sm:hidden">Panier</span>
                   </Button>
 
                   <Button
                     onClick={handleWhatsApp}
                     variant="secondary"
                     size="lg"
-                    className="h-12 text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 font-semibold"
+                    className="h-10 sm:h-12 text-sm sm:text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 font-semibold"
                   >
-                    <MessageCircle className="mr-2 h-5 w-5" />
+                    <MessageCircle className="mr-1 sm:mr-2 h-4 sm:h-5 w-4 sm:w-5" />
                     WhatsApp
                   </Button>
                 </div>
@@ -414,21 +416,21 @@ export default function ProductDetail() {
             </div>
 
             {/* Additional Trust Signals */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                <div className="text-2xl mb-2">🚚</div>
-                <div className="text-sm font-medium text-green-800">Livraison rapide</div>
-                <div className="text-xs text-green-600">24-48h partout au Maroc</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4">
+              <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                <div className="text-xl sm:text-2xl mb-2">🚚</div>
+                <div className="text-xs sm:text-sm font-medium text-green-800">Livraison rapide</div>
+                <div className="text-[10px] sm:text-xs text-green-600">24-48h partout au Maroc</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-                <div className="text-2xl mb-2">🔒</div>
-                <div className="text-sm font-medium text-blue-800">Paiement sécurisé</div>
-                <div className="text-xs text-blue-600">SSL & cryptage avancé</div>
+              <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                <div className="text-xl sm:text-2xl mb-2">🔒</div>
+                <div className="text-xs sm:text-sm font-medium text-blue-800">Paiement sécurisé</div>
+                <div className="text-[10px] sm:text-xs text-blue-600">SSL & cryptage avancé</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
-                <div className="text-2xl mb-2">↩️</div>
-                <div className="text-sm font-medium text-purple-800">Retour gratuit</div>
-                <div className="text-xs text-purple-600">30 jours satisfait/remboursé</div>
+              <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                <div className="text-xl sm:text-2xl mb-2">↩️</div>
+                <div className="text-xs sm:text-sm font-medium text-purple-800">Retour gratuit</div>
+                <div className="text-[10px] sm:text-xs text-purple-600">30 jours satisfait/remboursé</div>
               </div>
             </div>
           </div>
@@ -436,18 +438,39 @@ export default function ProductDetail() {
 
         {/* 3D Model Section - Full Width Below */}
         {hasModel3D && (
-          <div className="mt-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">Modèle 3D interactif</h2>
-              <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+          <div className="mt-8 sm:mt-12 lg:mt-16">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3">Modèle 3D interactif</h2>
+              <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-4">
                 Explorez le produit en 3D - utilisez votre souris pour faire tourner, zoomer et déplacer le modèle
               </p>
             </div>
-            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-6 shadow-lg">
+            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 sm:p-6 shadow-lg">
               <ModelViewer3D urlGlb={product.model_url} />
             </div>
           </div>
         )}
+      </div>
+
+      {/* Mobile Sticky Bottom Action Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50 p-3 safe-area-pb">
+        <div className="flex gap-2">
+          <Button
+            onClick={handleWhatsApp}
+            variant="outline"
+            className="flex-1 h-12 text-sm font-semibold bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            WhatsApp
+          </Button>
+          <Button
+            onClick={handleBuyNow}
+            className="flex-[2] h-12 text-sm font-bold bg-gradient-to-r from-primary to-primary/90"
+            disabled={!product.en_stock}
+          >
+            🚀 Acheter maintenant
+          </Button>
+        </div>
       </div>
 
       <CheckoutModal
