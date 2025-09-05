@@ -410,26 +410,6 @@ export default function ProductDetail() {
                   </Button>
                 </div>
 
-                {/* Delivery and Payment Info */}
-                <div className="mt-4 pt-4 border-t border-muted/50">
-                  <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
-                    <div className="text-center">
-                      <div className="text-lg mb-1">🚚</div>
-                      <div className="font-medium">Livraison rapide</div>
-                      <div>24-48h partout au Maroc</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg mb-1">🔒</div>
-                      <div className="font-medium">Paiement sécurisé</div>
-                      <div>COD</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg mb-1">↩️</div>
-                      <div className="font-medium">Retour gratuit</div>
-                      <div>30 jours satisfait/remboursé</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
