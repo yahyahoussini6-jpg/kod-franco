@@ -51,7 +51,8 @@ export function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.nom}</h3>
           {product.description && (
             <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
-              {product.description}
+              {product.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+              {product.description.replace(/<[^>]*>/g, '').length > 100 && '...'}
             </p>
           )}
           <div className="flex items-center justify-between">
