@@ -410,20 +410,23 @@ export default function ProductDetail() {
                   </Button>
                 </div>
 
-                {/* Security badges */}
+                {/* Delivery and Payment Info */}
                 <div className="mt-4 pt-4 border-t border-muted/50">
-                  <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      SSL Sécurisé
+                  <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
+                    <div className="text-center">
+                      <div className="text-lg mb-1">🚚</div>
+                      <div className="font-medium">Livraison rapide</div>
+                      <div>24-48h partout au Maroc</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      Paiement protégé
+                    <div className="text-center">
+                      <div className="text-lg mb-1">🔒</div>
+                      <div className="font-medium">Paiement sécurisé</div>
+                      <div>COD</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                      Données cryptées
+                    <div className="text-center">
+                      <div className="text-lg mb-1">↩️</div>
+                      <div className="font-medium">Retour gratuit</div>
+                      <div>30 jours satisfait/remboursé</div>
                     </div>
                   </div>
                 </div>
