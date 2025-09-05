@@ -267,41 +267,36 @@ export default function ProductDetail() {
                     </div>
                   </div>
                   
-                  {/* Payment Features */}
+                  {/* Product Description in Features Area */}
                   <div className="mt-4 pt-4 border-t border-primary/20">
-                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        Livraison gratuite
+                    {product.description ? (
+                      <div 
+                        className="text-sm text-muted-foreground prose prose-sm prose-gray dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: product.description }}
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          Livraison gratuite
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          Paiement sécurisé
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          Garantie 30 jours
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          Support 24/7
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        Paiement sécurisé
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        Garantie 30 jours
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        Support 24/7
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
-              
-              {product.description && (
-                <div className="prose prose-sm max-w-none">
-                  <div className="p-6 bg-card/50 rounded-xl border">
-                    <h3 className="text-lg font-semibold mb-3 text-foreground">Description du produit</h3>
-                    <div 
-                      className="text-muted-foreground leading-relaxed prose prose-sm prose-gray dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: product.description }}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Enhanced Product Options */}
