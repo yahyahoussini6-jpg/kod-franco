@@ -29,6 +29,7 @@ import AdminReturns from "./pages/admin/Returns";
 import AdminFinance from "./pages/admin/Finance";
 import AdminShipping from "./pages/admin/Shipping";
 import SystemPage from "./pages/admin/System";
+import WhatsAppSettings from "./pages/admin/WhatsAppSettings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
@@ -234,6 +235,7 @@ const App = () => (
                     <Route path="finance" element={<AdminFinance />} />
                     <Route path="shipping" element={<AdminShipping />} />
                     <Route path="system" element={<SystemPage />} />
+                    <Route path="whatsapp" element={<WhatsAppSettings />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>

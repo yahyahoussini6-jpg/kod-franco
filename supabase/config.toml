@@ -1,1 +1,10 @@
 project_id = "msrajpxxrczejxqvwcxl"
+
+[auth]
+enable_signup = true
+
+[edge-functions.send-order-confirm]
+verify_jwt = false
+
+[edge-functions.wa-webhook]
+verify_jwt = false

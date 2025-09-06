@@ -21,6 +21,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 
+import { MessageSquare } from 'lucide-react';
+
 const navigation = [
   { name: 'Analytics', href: '/admin', icon: BarChart3, exact: true },
   { name: 'Commandes', href: '/admin/orders', icon: ShoppingCart },
@@ -42,6 +44,7 @@ const navigation = [
     type: 'section',
     items: [
       { name: 'Administration', href: '/admin/system', icon: Settings },
+      { name: 'WhatsApp', href: '/admin/whatsapp', icon: MessageSquare },
     ]
   }
 ];
