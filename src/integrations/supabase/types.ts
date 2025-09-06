@@ -551,17 +551,23 @@ export type Database = {
           customer_id: string | null
           delivered_at: string | null
           discount_total: number | null
+          first_name: string | null
           id: string
+          lang: string | null
           order_total: number
           packed_at: string | null
+          phone_e164: string | null
           region: string | null
           returned_at: string | null
           shipped_at: string | null
           shipping_cost: number | null
           source_channel: string | null
           status: string | null
+          total_mad: number | null
           utm_campaign: string | null
           utm_source: string | null
+          whatsapp_confirm_at: string | null
+          whatsapp_confirm_sent: boolean | null
         }
         Insert: {
           canceled_at?: string | null
@@ -579,17 +585,23 @@ export type Database = {
           customer_id?: string | null
           delivered_at?: string | null
           discount_total?: number | null
+          first_name?: string | null
           id?: string
+          lang?: string | null
           order_total?: number
           packed_at?: string | null
+          phone_e164?: string | null
           region?: string | null
           returned_at?: string | null
           shipped_at?: string | null
           shipping_cost?: number | null
           source_channel?: string | null
           status?: string | null
+          total_mad?: number | null
           utm_campaign?: string | null
           utm_source?: string | null
+          whatsapp_confirm_at?: string | null
+          whatsapp_confirm_sent?: boolean | null
         }
         Update: {
           canceled_at?: string | null
@@ -607,17 +619,23 @@ export type Database = {
           customer_id?: string | null
           delivered_at?: string | null
           discount_total?: number | null
+          first_name?: string | null
           id?: string
+          lang?: string | null
           order_total?: number
           packed_at?: string | null
+          phone_e164?: string | null
           region?: string | null
           returned_at?: string | null
           shipped_at?: string | null
           shipping_cost?: number | null
           source_channel?: string | null
           status?: string | null
+          total_mad?: number | null
           utm_campaign?: string | null
           utm_source?: string | null
+          whatsapp_confirm_at?: string | null
+          whatsapp_confirm_sent?: boolean | null
         }
         Relationships: []
       }
@@ -1016,6 +1034,86 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_logs: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          direction: string | null
+          error_text: string | null
+          id: string
+          locale: string | null
+          order_id: string | null
+          payload: Json | null
+          phone_e164: string | null
+          response_body: Json | null
+          response_status: number | null
+          template_name: string | null
+          wa_message_id: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          direction?: string | null
+          error_text?: string | null
+          id?: string
+          locale?: string | null
+          order_id?: string | null
+          payload?: Json | null
+          phone_e164?: string | null
+          response_body?: Json | null
+          response_status?: number | null
+          template_name?: string | null
+          wa_message_id?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          direction?: string | null
+          error_text?: string | null
+          id?: string
+          locale?: string | null
+          order_id?: string | null
+          payload?: Json | null
+          phone_e164?: string | null
+          response_body?: Json | null
+          response_status?: number | null
+          template_name?: string | null
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_funnel_counts: {
@@ -1060,6 +1158,37 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_whatsapp_logs: {
+        Args: {
+          p_direction?: string
+          p_from_date?: string
+          p_limit?: number
+          p_offset?: number
+          p_phone?: string
+          p_to_date?: string
+        }
+        Returns: {
+          attempt_count: number
+          created_at: string
+          direction: string
+          error_text: string
+          id: string
+          locale: string
+          order_code: string
+          order_id: string
+          phone_e164: string
+          response_status: number
+          template_name: string
+          wa_message_id: string
+        }[]
+      }
+      get_whatsapp_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          setting_key: string
+          setting_value: string
+        }[]
       }
       has_role: {
         Args: {
@@ -1145,6 +1274,10 @@ export type Database = {
           t_transit_p50: number
           t_transit_p90: number
         }[]
+      }
+      update_whatsapp_setting: {
+        Args: { p_key: string; p_value: string }
+        Returns: undefined
       }
     }
     Enums: {
