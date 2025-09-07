@@ -28,6 +28,7 @@ interface WhatsAppLog {
 interface WhatsAppSettings {
   AUTO_CONFIRM_ENABLED: string;
   WA_TEMPLATE_NAME: string;
+  WA_PHONE_NUMBER_ID: string;
   DELAY_MINUTES: string;
   DRY_RUN: string;
 }
@@ -36,6 +37,7 @@ export default function WhatsAppSettings() {
   const [settings, setSettings] = useState<WhatsAppSettings>({
     AUTO_CONFIRM_ENABLED: 'false',
     WA_TEMPLATE_NAME: 'order_confirm',
+    WA_PHONE_NUMBER_ID: '',
     DELAY_MINUTES: '120',
     DRY_RUN: 'false'
   });
@@ -98,6 +100,7 @@ export default function WhatsAppSettings() {
       const settingsMap: WhatsAppSettings = {
         AUTO_CONFIRM_ENABLED: 'false',
         WA_TEMPLATE_NAME: 'order_confirm',
+        WA_PHONE_NUMBER_ID: '',
         DELAY_MINUTES: '120',
         DRY_RUN: 'false'
       };
@@ -264,6 +267,17 @@ export default function WhatsAppSettings() {
                 value={settings.WA_TEMPLATE_NAME}
                 onChange={(e) => setSettings(prev => ({ ...prev, WA_TEMPLATE_NAME: e.target.value }))}
                 onBlur={(e) => updateSetting('WA_TEMPLATE_NAME', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone-number-id">WhatsApp Phone Number ID</Label>
+              <Input
+                id="phone-number-id"
+                placeholder="123456789012345"
+                value={settings.WA_PHONE_NUMBER_ID}
+                onChange={(e) => setSettings(prev => ({ ...prev, WA_PHONE_NUMBER_ID: e.target.value }))}
+                onBlur={(e) => updateSetting('WA_PHONE_NUMBER_ID', e.target.value)}
               />
             </div>
 
