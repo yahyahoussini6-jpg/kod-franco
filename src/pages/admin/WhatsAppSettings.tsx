@@ -176,14 +176,23 @@ export default function WhatsAppSettings() {
 
     setIsTesting(true);
     try {
-      // This would call the edge function to send a test message
-      // For now, we'll just simulate it
+      const { data, error } = await supabase.functions.invoke('send-test-message', {
+        body: {
+          phone_e164: testPhone,
+          first_name: testName,
+          code_suivi: testCode,
+          order_total: parseFloat(testAmount),
+          lang: testLang
+        }
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Test Sent",
-        description: `Test message would be sent to ${testPhone}`,
+        description: `Test message sent to ${testPhone}`,
       });
       
-      // Reload logs to show the test
       await loadLogs();
     } catch (error) {
       console.error('Error sending test:', error);

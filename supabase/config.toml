@@ -8,3 +8,6 @@ verify_jwt = false
 
 [edge-functions.wa-webhook]
 verify_jwt = false
+
+[edge-functions.send-test-message]
+verify_jwt = false
