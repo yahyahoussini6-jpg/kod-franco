@@ -54,47 +54,17 @@ export default function ClientsPage() {
     },
   });
 
-  // Fetch customer profiles with order data
+  // Fetch customer profiles with analytics data
   const { data: customers, isLoading } = useQuery({
     queryKey: ['admin-customers'],
     queryFn: async () => {
-      // First get customer profiles
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles, error } = await supabase
         .from('customer_profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (profilesError) throw profilesError;
-
-      // Get order statistics for each customer
-      const customersWithStats = await Promise.all(profiles.map(async (profile) => {
-        const { data: orders, error: ordersError } = await supabase
-          .from('orders')
-          .select('id, order_total, status, created_at')
-          .eq('client_phone', profile.phone);
-
-        if (ordersError) {
-          console.error('Error fetching orders:', ordersError);
-          return { ...profile, orderCount: 0, totalSpent: 0, lastOrderDate: null };
-        }
-
-        const orderCount = orders.length;
-        const totalSpent = orders
-          .filter(o => o.status === 'livree')
-          .reduce((sum, order) => sum + Number(order.order_total || 0), 0);
-        
-        const lastOrderDate = orders.length > 0 ? 
-          Math.max(...orders.map(o => new Date(o.created_at || '').getTime())) : null;
-
-        return {
-          ...profile,
-          orderCount,
-          totalSpent,
-          lastOrderDate: lastOrderDate ? new Date(lastOrderDate) : null
-        };
-      }));
-
-      return customersWithStats;
+      if (error) throw error;
+      return profiles || [];
     }
   });
 
@@ -185,13 +155,23 @@ export default function ClientsPage() {
       'Email': customer.email || '',
       'Ville': customer.city || '',
       'Adresse': customer.address || '',
-      'Nombre commandes': customer.orderCount || 0,
-      'Total dépensé': customer.totalSpent || 0,
+      'Première commande': customer.first_order_at ? new Date(customer.first_order_at).toLocaleDateString('fr-FR') : '',
+      'Dernière commande': customer.last_order_at ? new Date(customer.last_order_at).toLocaleDateString('fr-FR') : '',
+      'Commandes livrées': customer.delivered_orders_cnt || 0,
+      'Commandes retournées': customer.rto_orders_cnt || 0,
+      'Commandes annulées': customer.cancelled_orders_cnt || 0,
+      'Revenue net': customer.delivered_net_revenue_mad || 0,
+      'Marge brute': customer.gross_margin_mad || 0,
+      'Taux confirmation': ((customer.confirmation_contactability_rate || 0) * 100).toFixed(1) + '%',
+      'Temps confirm moyen': (customer.avg_confirmation_time_min || 0).toFixed(0) + ' min',
+      'Source marketing': customer.marketing_source || '',
+      'Campagne': customer.campaign || '',
+      'Device fingerprint': customer.device_fingerprint || '',
+      'Cookie ID': customer.cookie_id || '',
+      'Notes blacklist': customer.notes_blacklist ? customer.notes_blacklist.join('; ') : '',
       'Score risque': customer.risk_score || 0,
       'Statut VIP': customer.is_vip ? 'Oui' : 'Non',
-      'Date création': new Date(customer.created_at).toLocaleDateString('fr-FR'),
-      'Dernière commande': customer.lastOrderDate ? 
-        customer.lastOrderDate.toLocaleDateString('fr-FR') : 'Aucune'
+      'Date création': new Date(customer.created_at).toLocaleDateString('fr-FR')
     }));
     
     const headers = Object.keys(csvData[0]);
@@ -379,8 +359,10 @@ export default function ClientsPage() {
                     <th className="text-left p-4 font-medium">Contact</th>
                     <th className="text-left p-4 font-medium">Ville</th>
                     <th className="text-left p-4 font-medium">Commandes</th>
-                    <th className="text-left p-4 font-medium">Total Dépensé</th>
-                    <th className="text-left p-4 font-medium">Score Risque</th>
+                    <th className="text-left p-4 font-medium">Revenue</th>
+                    <th className="text-left p-4 font-medium">Marge</th>
+                    <th className="text-left p-4 font-medium">Confirm %</th>
+                    <th className="text-left p-4 font-medium">Source</th>
                     <th className="text-left p-4 font-medium">Statut</th>
                     <th className="text-left p-4 font-medium">Actions</th>
                   </tr>
@@ -388,7 +370,7 @@ export default function ClientsPage() {
                 <tbody>
                   {filteredCustomers.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={10} className="p-8 text-center text-muted-foreground">
                         Aucun client trouvé
                       </td>
                     </tr>
@@ -418,16 +400,41 @@ export default function ClientsPage() {
                               )}
                             </div>
                           </td>
-                          <td className="p-4">
-                            <div className="flex items-center text-sm">
-                              <MapPin className="mr-1 h-3 w-3" />
-                              {customer.city || 'N/A'}
-                            </div>
-                          </td>
-                           <td className="p-4">{customer.orderCount || 0}</td>
-                           <td className="p-4">{customer.totalSpent || 0} MAD</td>
                            <td className="p-4">
-                             <Badge variant={riskBadge.variant}>{riskBadge.label}</Badge>
+                             <div className="flex items-center text-sm">
+                               <MapPin className="mr-1 h-3 w-3" />
+                               {customer.city || 'N/A'}
+                             </div>
+                           </td>
+                           <td className="p-4">
+                             <div className="text-sm">
+                               <div>{customer.delivered_orders_cnt || 0}D / {customer.rto_orders_cnt || 0}R / {customer.cancelled_orders_cnt || 0}C</div>
+                               <div className="text-xs text-muted-foreground">Total commandes</div>
+                             </div>
+                           </td>
+                           <td className="p-4">
+                             <div className="text-sm">
+                               <div>{(customer.delivered_net_revenue_mad || 0).toLocaleString()} MAD</div>
+                               <div className="text-xs text-muted-foreground">Net revenue</div>
+                             </div>
+                           </td>
+                           <td className="p-4">
+                             <div className="text-sm">
+                               <div>{(customer.gross_margin_mad || 0).toLocaleString()} MAD</div>
+                               <div className="text-xs text-muted-foreground">Marge brute</div>
+                             </div>
+                           </td>
+                           <td className="p-4">
+                             <div className="text-sm">
+                               <div>{((customer.confirmation_contactability_rate || 0) * 100).toFixed(1)}%</div>
+                               <div className="text-xs text-muted-foreground">{(customer.avg_confirmation_time_min || 0).toFixed(0)}min avg</div>
+                             </div>
+                           </td>
+                           <td className="p-4">
+                             <div className="text-sm">
+                               <div>{customer.marketing_source || 'N/A'}</div>
+                               <div className="text-xs text-muted-foreground">{customer.campaign || ''}</div>
+                             </div>
                            </td>
                            <td className="p-4">
                              <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>

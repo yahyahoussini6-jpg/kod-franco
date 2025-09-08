@@ -170,19 +170,35 @@ export type Database = {
         Row: {
           acquisition_source: string | null
           address: string | null
+          avg_confirmation_time_min: number | null
+          campaign: string | null
+          cancelled_orders_cnt: number | null
           city: string | null
+          confirmation_contactability_rate: number | null
+          cookie_id: string | null
           created_at: string
           date_of_birth: string | null
+          delivered_net_revenue_mad: number | null
+          delivered_orders_cnt: number | null
+          device_fingerprint: string | null
           email: string | null
+          first_order_at: string | null
+          first_touch: Json | null
           full_name: string
           gender: string | null
+          gross_margin_mad: number | null
           id: string
           is_blocked: boolean | null
           is_vip: boolean | null
+          last_order_at: string | null
+          last_touch: Json | null
           marketing_opt_in: boolean | null
+          marketing_source: string | null
           notes: string | null
+          notes_blacklist: string[] | null
           phone: string
           risk_score: number | null
+          rto_orders_cnt: number | null
           tags: string[] | null
           updated_at: string
           user_id: string | null
@@ -191,19 +207,35 @@ export type Database = {
         Insert: {
           acquisition_source?: string | null
           address?: string | null
+          avg_confirmation_time_min?: number | null
+          campaign?: string | null
+          cancelled_orders_cnt?: number | null
           city?: string | null
+          confirmation_contactability_rate?: number | null
+          cookie_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          delivered_net_revenue_mad?: number | null
+          delivered_orders_cnt?: number | null
+          device_fingerprint?: string | null
           email?: string | null
+          first_order_at?: string | null
+          first_touch?: Json | null
           full_name: string
           gender?: string | null
+          gross_margin_mad?: number | null
           id?: string
           is_blocked?: boolean | null
           is_vip?: boolean | null
+          last_order_at?: string | null
+          last_touch?: Json | null
           marketing_opt_in?: boolean | null
+          marketing_source?: string | null
           notes?: string | null
+          notes_blacklist?: string[] | null
           phone: string
           risk_score?: number | null
+          rto_orders_cnt?: number | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
@@ -212,19 +244,35 @@ export type Database = {
         Update: {
           acquisition_source?: string | null
           address?: string | null
+          avg_confirmation_time_min?: number | null
+          campaign?: string | null
+          cancelled_orders_cnt?: number | null
           city?: string | null
+          confirmation_contactability_rate?: number | null
+          cookie_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          delivered_net_revenue_mad?: number | null
+          delivered_orders_cnt?: number | null
+          device_fingerprint?: string | null
           email?: string | null
+          first_order_at?: string | null
+          first_touch?: Json | null
           full_name?: string
           gender?: string | null
+          gross_margin_mad?: number | null
           id?: string
           is_blocked?: boolean | null
           is_vip?: boolean | null
+          last_order_at?: string | null
+          last_touch?: Json | null
           marketing_opt_in?: boolean | null
+          marketing_source?: string | null
           notes?: string | null
+          notes_blacklist?: string[] | null
           phone?: string
           risk_score?: number | null
+          rto_orders_cnt?: number | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
@@ -1274,6 +1322,10 @@ export type Database = {
           t_transit_p50: number
           t_transit_p90: number
         }[]
+      }
+      update_customer_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_whatsapp_setting: {
         Args: { p_key: string; p_value: string }
