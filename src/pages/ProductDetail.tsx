@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/context/CartContext';
 import { CheckoutModal } from '@/components/CheckoutModal';
-import ModelViewer3D from '@/components/ModelViewer3D';
+import ThreeDShowcase from '@/components/ThreeDShowcase';
 import { formatPrice } from '@/lib/format';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
@@ -436,18 +436,24 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* 3D Model Section - Full Width Below */}
+        {/* 3D Model Section - Enhanced with Scroll */}
         {hasModel3D && (
-          <div className="mt-8 sm:mt-12 lg:mt-16">
+          <div className="mt-8 sm:mt-12 lg:mt-16" id="hero-3d-section">
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3">Modèle 3D interactif</h2>
               <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-4">
                 Explorez le produit en 3D - utilisez votre souris pour faire tourner, zoomer et déplacer le modèle
               </p>
             </div>
-            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 sm:p-6 shadow-lg">
-              <ModelViewer3D urlGlb={product.model_url} />
+            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 sm:p-6 shadow-lg sticky top-16 z-10">
+              <ThreeDShowcase 
+                urlGlb={product.model_url} 
+                enableScroll={true}
+                containerId="hero-3d-section"
+              />
             </div>
+            {/* Spacer for scroll effect */}
+            <div className="h-[50vh]"></div>
           </div>
         )}
       </div>
