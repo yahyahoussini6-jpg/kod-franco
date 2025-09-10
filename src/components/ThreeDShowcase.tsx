@@ -154,6 +154,27 @@ function CameraRig({ modelRef, progressRef }: { modelRef: React.RefObject<THREE.
   return null;
 }
 
+// Controls wrapper to avoid init before camera/gl are ready
+function Controls({ isMobile }: { isMobile: boolean }) {
+  const { camera, gl } = useThree();
+  // Guard against undefined camera or gl during layout changes/pinning
+  // @ts-ignore
+  if (!camera || !gl || !gl.domElement) return null;
+  return (
+    <OrbitControls 
+      enableZoom={!isMobile} 
+      enablePan={false} 
+      enableRotate={true}
+      minPolarAngle={0.2}
+      maxPolarAngle={Math.PI - 0.2}
+      enableDamping={true}
+      dampingFactor={0.08}
+      rotateSpeed={0.6}
+      target={[0, 0, 0]}
+    />
+  );
+}
+
 function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDShowcaseProps) {
   const [error, setError] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -186,7 +207,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
       start: 'top top',
       end: '+=120%',
       scrub: true,
-      pin: containerRef.current,
+      pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
@@ -221,7 +242,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
   return (
     <div 
       ref={containerRef}
-      className="h-[70vh] md:h-[80vh] w-full border rounded-lg overflow-hidden bg-background relative"
+      className="h-screen w-full border rounded-lg overflow-hidden bg-background relative"
       id={containerId}
     >
       {error ? (
@@ -320,17 +341,8 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
               </Suspense>
               
               {/* Orbit Controls */}
-              <OrbitControls 
-                enableZoom={!isMobile} 
-                enablePan={false} 
-                enableRotate={true}
-                minPolarAngle={0.2}
-                maxPolarAngle={Math.PI - 0.2}
-                enableDamping={true}
-                dampingFactor={0.08}
-                rotateSpeed={0.6}
-                target={[0, 0, 0]}
-              />
+              {/* Orbit Controls (guarded) */}
+              <Controls isMobile={isMobile} />
 
               {/* Camera rig for scroll-driven animation */}
               {enableScroll && (
