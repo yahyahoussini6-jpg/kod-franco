@@ -12,6 +12,12 @@ import { useCart } from '@/context/CartContext';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import ThreeDShowcase from '@/components/ThreeDShowcase';
 import { formatPrice } from '@/lib/format';
+import { useProductSEO } from '@/hooks/useSEO';
+import { SEOHead } from '@/components/seo/SEOHead';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { FAQSection } from '@/components/seo/FAQSection';
+import { RelatedProducts } from '@/components/seo/RelatedProducts';
+import { ProductSchema, OrganizationSchema, WebsiteSchema } from '@/components/seo/ProductSchema';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
@@ -23,13 +29,22 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Get current locale (should come from context/router in real app)
+  const locale = 'fr-MA';
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          categories!category_id (
+            name,
+            slug
+          )
+        `)
         .eq('slug', slug)
         .maybeSingle();
       
@@ -38,6 +53,9 @@ export default function ProductDetail() {
     },
     enabled: !!slug,
   });
+
+  // Generate SEO data
+  const { seo, structuredData, breadcrumbs } = useProductSEO(product, locale);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -132,12 +150,16 @@ export default function ProductDetail() {
 
   return (
     <>
-      {/* Hero Section with Breadcrumb */}
+      {/* SEO Head Tags */}
+      <SEOHead seo={seo} structuredData={structuredData} />
+      <ProductSchema structuredData={structuredData} />
+      <OrganizationSchema brandName={seo.brand} />
+      <WebsiteSchema />
+
+      {/* Hero Section with SEO Breadcrumbs */}
       <div className="bg-gradient-to-br from-background via-muted/20 to-background border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="text-sm text-muted-foreground">
-            Accueil › Produits › {product.nom}
-          </div>
+          <Breadcrumbs items={breadcrumbs} />
         </div>
       </div>
 
@@ -456,6 +478,111 @@ export default function ProductDetail() {
             <div className="h-[50vh]"></div>
           </div>
         )}
+      </div>
+
+      {/* SEO Content Sections */}
+      <div className="container mx-auto px-3 sm:px-4 py-8 space-y-12">
+        {/* Product Benefits Section */}
+        {seo.benefit_bullets && seo.benefit_bullets.length > 0 && (
+          <section className="space-y-6">
+            <h2 className="text-2xl font-bold text-foreground">Avantages du produit</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {seo.benefit_bullets.map((benefit, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-primary text-sm font-bold">✓</span>
+                  </div>
+                  <span className="text-foreground font-medium">{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* How to Use Section */}
+        {seo.how_to_use && (
+          <section className="space-y-6">
+            <h2 className="text-2xl font-bold text-foreground">Mode d'emploi</h2>
+            <div className="prose prose-gray dark:prose-invert max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: seo.how_to_use }} />
+            </div>
+          </section>
+        )}
+
+        {/* Ingredients Section */}
+        {seo.ingredients_summary && (
+          <section className="space-y-6">
+            <h2 className="text-2xl font-bold text-foreground">Ingrédients</h2>
+            <div className="bg-muted/30 rounded-lg p-6">
+              <p className="text-muted-foreground leading-relaxed">{seo.ingredients_summary}</p>
+              {seo.inci_full && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer font-medium text-primary hover:text-primary/80">
+                    Voir la composition complète (INCI)
+                  </summary>
+                  <p className="mt-2 text-sm text-muted-foreground">{seo.inci_full}</p>
+                </details>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* FAQ Section */}
+        <FAQSection seo={seo} locale={locale} />
+
+        {/* Related Products */}
+        <RelatedProducts 
+          relatedSkus={seo.related_product_skus} 
+          currentProductId={product.id}
+          locale={locale}
+        />
+
+        {/* Trust Signals & Shipping Info */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-bold text-foreground">Livraison & Garanties</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <span className="text-green-600 text-lg">🚚</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Livraison gratuite</h3>
+                  <p className="text-sm text-muted-foreground">{seo.cod_shipping_note}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 text-lg">💳</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Paiement sécurisé</h3>
+                  <p className="text-sm text-muted-foreground">Paiement à la livraison (COD) ou en ligne</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <span className="text-purple-600 text-lg">🛡️</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Garantie 30 jours</h3>
+                  <p className="text-sm text-muted-foreground">Retour gratuit si non satisfait</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                  <span className="text-orange-600 text-lg">📞</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Support client</h3>
+                  <p className="text-sm text-muted-foreground">Service client disponible 7j/7</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Mobile Sticky Bottom Action Bar */}
