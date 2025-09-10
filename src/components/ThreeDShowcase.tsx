@@ -186,6 +186,27 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
 
   console.log('ThreeDShowcase render:', { urlGlb, loading, error });
 
+  // Safe OrbitControls that only mounts when R3F context (camera, gl.domElement) is ready
+  const SafeControls: React.FC = () => {
+    const { camera, gl } = useThree();
+    // @ts-ignore - runtime guard
+    if (!camera || !gl || !gl.domElement) return null;
+    return (
+      <OrbitControls 
+        enableZoom={!isMobile} 
+        enablePan={false} 
+        enableRotate
+        enableDamping
+        dampingFactor={0.08}
+        rotateSpeed={0.6}
+        minPolarAngle={0.2}
+        maxPolarAngle={Math.PI - 0.2}
+        target={[0, 0, 0]}
+      />
+    );
+  };
+
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -342,7 +363,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
               
               {/* Orbit Controls */}
               {/* Orbit Controls (guarded) */}
-              <Controls isMobile={isMobile} />
+              <SafeControls />
 
               {/* Camera rig for scroll-driven animation */}
               {enableScroll && (
