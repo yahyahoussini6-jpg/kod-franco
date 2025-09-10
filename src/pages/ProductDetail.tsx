@@ -438,14 +438,14 @@ export default function ProductDetail() {
 
         {/* 3D Model Section - Enhanced with Scroll */}
         {hasModel3D && (
-          <div className="mt-8 sm:mt-12 lg:mt-16" id="hero-3d-section">
+          <div className="mt-8 sm:mt-12 lg:mt-16" id="hero-3d-section-wrapper">
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3">Modèle 3D interactif</h2>
               <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-4">
                 Explorez le produit en 3D - utilisez votre souris pour faire tourner, zoomer et déplacer le modèle
               </p>
             </div>
-            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 sm:p-6 shadow-lg sticky top-16 z-10">
+            <div className="w-full bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 sm:p-6 shadow-lg">
               <ThreeDShowcase 
                 urlGlb={product.model_url} 
                 enableScroll={true}

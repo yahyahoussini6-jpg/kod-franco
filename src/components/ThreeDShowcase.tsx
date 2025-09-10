@@ -3,6 +3,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
 import { GLTFLoader } from 'three-stdlib';
 import * as THREE from 'three';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 interface ThreeDShowcaseProps {
   urlGlb: string;
@@ -13,11 +15,13 @@ interface ThreeDShowcaseProps {
 function Model({ 
   urlGlb, 
   onError, 
-  onLoad
+  onLoad,
+  groupRef,
 }: { 
   urlGlb: string; 
   onError: (error: any) => void; 
-  onLoad: () => void;
+  onLoad: (bounds: { center: THREE.Vector3; radius: number; scale: number }) => void;
+  groupRef?: React.MutableRefObject<THREE.Group | null>;
 }) {
   const [gltf, setGltf] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,10 +41,21 @@ function Model({
       (loadedGltf) => {
         console.log('3D model loaded successfully:', loadedGltf);
         
+        // Center and scale model to target height, then enhance materials
+        const tempScene = loadedGltf.scene;
+        const box = new THREE.Box3().setFromObject(tempScene);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const targetHeight = 0.18; // meters
+        const scale = size.y > 0 ? targetHeight / size.y : 1;
+        tempScene.scale.setScalar(scale);
+        tempScene.position.x -= center.x;
+        tempScene.position.y -= center.y;
+        tempScene.position.z -= center.z;
+        
         // Apply enhanced materials
-        loadedGltf.scene.traverse((child: any) => {
+        tempScene.traverse((child: any) => {
           if (child.isMesh) {
-            // Ensure material exists and apply enhancements
             if (child.material) {
               // Glass material detection
               if (child.material.name?.toLowerCase().includes('glass') || 
@@ -54,7 +69,6 @@ function Model({
                   opacity: 0.95,
                 });
               }
-              
               // Label material
               else if (child.material.name?.toLowerCase().includes('label')) {
                 child.material = new THREE.MeshStandardMaterial({
@@ -63,7 +77,6 @@ function Model({
                   metalness: 0.02,
                 });
               }
-              
               // Cap/metal material
               else if (child.material.name?.toLowerCase().includes('cap') || 
                        child.material.name?.toLowerCase().includes('metal')) {
@@ -74,15 +87,18 @@ function Model({
                 });
               }
             }
-            
             child.castShadow = true;
             child.receiveShadow = true;
           }
         });
         
+        // Compute bounds after scaling
+        const sphere = new THREE.Sphere();
+        new THREE.Box3().setFromObject(tempScene).getBoundingSphere(sphere);
+        
         setGltf(loadedGltf);
         setIsLoading(false);
-        onLoad();
+        onLoad({ center, radius: sphere.radius, scale });
       },
       (progress) => {
         console.log('Loading progress:', progress);
@@ -107,10 +123,27 @@ function Model({
   if (!gltf) return null;
 
   return (
-    <group ref={modelRef}>
-      <primitive object={gltf.scene} scale={[2, 2, 2]} position={[0, 0, 0]} />
+    <group ref={(el) => { modelRef.current = el as any; if (groupRef) (groupRef as any).current = el as any; }}>
+      <primitive object={gltf.scene} />
     </group>
   );
+}
+
+// Camera rig to map scroll progress to camera & model transforms
+function CameraRig({ modelRef, progressRef }: { modelRef: React.RefObject<THREE.Group>, progressRef: React.MutableRefObject<number> }) {
+  const { camera } = useThree();
+  useFrame(() => {
+    const p = progressRef.current || 0;
+    const z = 1.45 + (1.35 - 1.45) * p;
+    camera.position.set(0.35, 0.24, z);
+    camera.lookAt(0, 0.09, 0);
+
+    if (modelRef.current) {
+      const yaw = THREE.MathUtils.degToRad(-18 * (1 - p));
+      modelRef.current.rotation.y = yaw;
+    }
+  });
+  return null;
 }
 
 function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDShowcaseProps) {
@@ -118,6 +151,9 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const modelGroupRef = useRef<THREE.Group>(null);
+  const scrollProgressRef = useRef(0);
+  const boundsRef = useRef<{ center: THREE.Vector3; radius: number; scale: number } | null>(null);
 
   console.log('ThreeDShowcase render:', { urlGlb, loading, error });
 
@@ -131,13 +167,37 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // ScrollTrigger progress for hero reveal
+  useEffect(() => {
+    if (!enableScroll) return;
+    if (!containerRef.current) return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    const trigger = ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: 'top top',
+      end: '+=120%',
+      scrub: true,
+      pin: containerRef.current,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        scrollProgressRef.current = self.progress;
+      },
+    });
+
+    return () => {
+      trigger.kill();
+    };
+  }, [enableScroll]);
+
   const handleError = useCallback((error: any) => {
     console.error('ThreeDShowcase Error:', error);
     setError(error);
     setLoading(false);
   }, []);
 
-  const handleLoad = useCallback(() => {
+  const handleLoad = useCallback((bounds: { center: THREE.Vector3; radius: number; scale: number }) => {
     console.log('3D Model loaded successfully');
     setLoading(false);
   }, []);
@@ -199,7 +259,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
                 powerPreference: "high-performance"
               }}
               dpr={isMobile ? Math.min(1.5, window.devicePixelRatio) : Math.min(2, window.devicePixelRatio)}
-              frameloop="demand"
+              frameloop={enableScroll ? 'always' : 'demand'}
             >
               {/* Enhanced Lighting Setup */}
               <Environment preset="studio" />
@@ -237,7 +297,8 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
                 <Model 
                   urlGlb={urlGlb} 
                   onError={handleError} 
-                  onLoad={handleLoad}
+                  onLoad={(b) => { boundsRef.current = b; handleLoad(b); }}
+                  groupRef={modelGroupRef}
                 />
                 
                 {/* Contact Shadows */}
@@ -252,18 +313,23 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
               
               {/* Orbit Controls */}
               <OrbitControls 
-                enableZoom={!isMobile} 
+                enableZoom={false} 
                 enablePan={false} 
                 enableRotate={true}
-                minPolarAngle={Math.PI * 0.4 / Math.PI}
-                maxPolarAngle={Math.PI * 1.0 / Math.PI}
-                minAzimuthAngle={-0.6}
-                maxAzimuthAngle={0.6}
+                minPolarAngle={0.4}
+                maxPolarAngle={1.0}
+                minAzimuthAngle={-0.105}
+                maxAzimuthAngle={0.105}
                 enableDamping={true}
                 dampingFactor={0.05}
                 rotateSpeed={0.5}
                 target={[0, 0.09, 0]}
               />
+
+              {/* Camera rig for scroll-driven animation */}
+              {enableScroll && (
+                <CameraRig modelRef={modelGroupRef} progressRef={scrollProgressRef} />
+              )}
             </Canvas>
           </div>
         </>
