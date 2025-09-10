@@ -41,17 +41,19 @@ function Model({
       (loadedGltf) => {
         console.log('3D model loaded successfully:', loadedGltf);
         
-        // Center and scale model to target height, then enhance materials
+        // Auto-fit model to viewport with proper scaling
         const tempScene = loadedGltf.scene;
         const box = new THREE.Box3().setFromObject(tempScene);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
-        const targetHeight = 0.18; // meters
-        const scale = size.y > 0 ? targetHeight / size.y : 1;
+        
+        // Calculate scale to fit viewport nicely (80% of view height)
+        const maxDimension = Math.max(size.x, size.y, size.z);
+        const targetSize = 1.2; // Viewport units
+        const scale = maxDimension > 0 ? targetSize / maxDimension : 1;
+        
         tempScene.scale.setScalar(scale);
-        tempScene.position.x -= center.x;
-        tempScene.position.y -= center.y;
-        tempScene.position.z -= center.z;
+        tempScene.position.copy(center.clone().multiplyScalar(-scale));
         
         // Apply enhanced materials
         tempScene.traverse((child: any) => {
@@ -131,15 +133,21 @@ function Model({
 
 // Camera rig to map scroll progress to camera & model transforms
 function CameraRig({ modelRef, progressRef }: { modelRef: React.RefObject<THREE.Group>, progressRef: React.MutableRefObject<number> }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  
   useFrame(() => {
     const p = progressRef.current || 0;
-    const z = 1.45 + (1.35 - 1.45) * p;
-    camera.position.set(0.35, 0.24, z);
-    camera.lookAt(0, 0.09, 0);
+    
+    // Auto-adjust camera distance based on screen aspect ratio
+    const aspect = size.width / size.height;
+    const baseDistance = aspect > 1 ? 2.8 : 3.5; // Closer on desktop, further on mobile
+    const z = baseDistance + (baseDistance * 0.15) * (1 - p); // Dolly in slightly
+    
+    camera.position.set(0, 0, z);
+    camera.lookAt(0, 0, 0);
 
     if (modelRef.current) {
-      const yaw = THREE.MathUtils.degToRad(-18 * (1 - p));
+      const yaw = THREE.MathUtils.degToRad(-25 * (1 - p));
       modelRef.current.rotation.y = yaw;
     }
   });
@@ -213,7 +221,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
   return (
     <div 
       ref={containerRef}
-      className="h-[300px] md:h-[480px] w-full border rounded-lg overflow-hidden bg-background relative"
+      className="h-[70vh] md:h-[80vh] w-full border rounded-lg overflow-hidden bg-background relative"
       id={containerId}
     >
       {error ? (
@@ -242,10 +250,10 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
           <div className="w-full h-full">
             <Canvas 
               camera={{ 
-                position: [0.35, 0.24, 1.35],
-                fov: 38,
+                position: [0, 0, 3.5],
+                fov: 45,
                 near: 0.1,
-                far: 18
+                far: 20
               }}
               onCreated={() => console.log('Canvas created, loading model:', urlGlb)}
               style={{ 
@@ -313,17 +321,15 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
               
               {/* Orbit Controls */}
               <OrbitControls 
-                enableZoom={false} 
+                enableZoom={!isMobile} 
                 enablePan={false} 
                 enableRotate={true}
-                minPolarAngle={0.4}
-                maxPolarAngle={1.0}
-                minAzimuthAngle={-0.105}
-                maxAzimuthAngle={0.105}
+                minPolarAngle={0.2}
+                maxPolarAngle={Math.PI - 0.2}
                 enableDamping={true}
-                dampingFactor={0.05}
-                rotateSpeed={0.5}
-                target={[0, 0.09, 0]}
+                dampingFactor={0.08}
+                rotateSpeed={0.6}
+                target={[0, 0, 0]}
               />
 
               {/* Camera rig for scroll-driven animation */}
