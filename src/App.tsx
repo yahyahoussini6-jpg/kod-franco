@@ -37,6 +37,10 @@ import ReturnPolicy from "./pages/ReturnPolicy";
 import Shipping from "./pages/Shipping";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import AdminBlog from "./pages/admin/Blog";
+import SEOManagement from "./pages/admin/SEOManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,6 +88,9 @@ function Navigation() {
             </Link>
             <Link to="/suivi-commande" className="text-muted-foreground hover:text-foreground transition-colors">
               Suivi commande
+            </Link>
+            <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+              Blog
             </Link>
             <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
               Contact
@@ -160,6 +167,13 @@ function Navigation() {
                 Suivi commande
               </Link>
               <Link 
+                to="/blog" 
+                className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              <Link 
                 to="/contact" 
                 className="text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -223,6 +237,8 @@ const App = () => (
                   <Route path="/livraison" element={<Shipping />} />
                   <Route path="/conditions-utilisation" element={<TermsOfService />} />
                   <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
@@ -234,6 +250,8 @@ const App = () => (
                     <Route path="returns" element={<AdminReturns />} />
                     <Route path="finance" element={<AdminFinance />} />
                     <Route path="shipping" element={<AdminShipping />} />
+                    <Route path="blog" element={<AdminBlog />} />
+                    <Route path="seo" element={<SEOManagement />} />
                     <Route path="system" element={<SystemPage />} />
                     <Route path="whatsapp" element={<WhatsAppSettings />} />
                   </Route>

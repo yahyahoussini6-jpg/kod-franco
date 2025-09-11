@@ -40,6 +40,14 @@ const navigation = [
     ]
   },
   { 
+    name: 'Marketing & SEO', 
+    type: 'section',
+    items: [
+      { name: 'Blog', href: '/admin/blog', icon: MessageSquare },
+      { name: 'SEO Management', href: '/admin/seo', icon: TestTube },
+    ]
+  },
+  { 
     name: 'Système', 
     type: 'section',
     items: [
