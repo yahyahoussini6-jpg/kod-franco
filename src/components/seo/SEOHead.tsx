@@ -13,7 +13,7 @@ export function SEOHead({ seo, structuredData }: SEOHeadProps) {
   const description = SEO_TEMPLATES.metaDescription(seo);
   const canonicalUrl = generateCanonicalUrl(seo.url_slug);
   const hreflangTags = generateHreflangTags(seo.url_slug);
-  const primaryImage = seo.image_filenames[0];
+  const primaryImage = seo.image_filenames?.[0];
 
   return (
     <Helmet>
