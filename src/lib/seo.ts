@@ -2,10 +2,10 @@ import { ProductSEO, StructuredDataProduct, BreadcrumbItem } from '@/types/seo';
 
 export const SEO_TEMPLATES = {
   title: (seo: ProductSEO) => 
-    `${seo.brand} – ${seo.product_name} ${seo.size_variant || ''} | ${seo.benefit_bullets.slice(0, 2).join(', ')}`.slice(0, 60),
+    `${seo.brand} – ${seo.product_name} ${seo.size_variant || ''} | ${(seo.benefit_bullets || []).slice(0, 2).join(', ')}`.slice(0, 60),
   
   metaDescription: (seo: ProductSEO) => 
-    `${seo.product_name} ${seo.size_variant || ''} for ${seo.who_its_for}. ${seo.benefit_bullets.slice(0, 2).join(', ')}. COD Morocco.`.slice(0, 155),
+    `${seo.product_name} ${seo.size_variant || ''} for ${seo.who_its_for}. ${(seo.benefit_bullets || []).slice(0, 2).join(', ')}. COD Morocco.`.slice(0, 155),
   
   h1: (seo: ProductSEO) => 
     `${seo.product_name} ${seo.size_variant || ''}`,
