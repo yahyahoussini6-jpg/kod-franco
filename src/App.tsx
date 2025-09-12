@@ -39,6 +39,8 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+
+const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
 import AdminBlog from "./pages/admin/Blog";
 import SEOManagement from "./pages/admin/SEOManagement";
 import NotFound from "./pages/NotFound";
@@ -252,6 +254,7 @@ const App = () => (
                     <Route path="shipping" element={<AdminShipping />} />
                     <Route path="blog" element={<AdminBlog />} />
                     <Route path="seo" element={<SEOManagement />} />
+                    <Route path="reviews" element={<AdminReviews />} />
                     <Route path="system" element={<SystemPage />} />
                     <Route path="whatsapp" element={<WhatsAppSettings />} />
                   </Route>

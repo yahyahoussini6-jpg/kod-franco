@@ -908,6 +908,45 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          is_approved: boolean
+          is_verified: boolean
+          product_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          id?: string
+          is_approved?: boolean
+          is_verified?: boolean
+          product_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          is_approved?: boolean
+          is_verified?: boolean
+          product_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_variants: {
         Row: {
           cost: number
@@ -1478,6 +1517,14 @@ export type Database = {
           statut: string
         }[]
       }
+      get_product_rating_stats: {
+        Args: { p_product_id: string }
+        Returns: {
+          average_rating: number
+          rating_distribution: Json
+          total_reviews: number
+        }[]
+      }
       get_related_blog_posts: {
         Args: { p_limit?: number; p_post_id: string }
         Returns: {
@@ -1620,6 +1667,10 @@ export type Database = {
       update_whatsapp_setting: {
         Args: { p_key: string; p_value: string }
         Returns: undefined
+      }
+      verify_and_approve_review: {
+        Args: { p_phone: string; p_product_id: string; p_review_id: string }
+        Returns: boolean
       }
     }
     Enums: {

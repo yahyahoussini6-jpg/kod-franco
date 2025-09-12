@@ -18,6 +18,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { FAQSection } from '@/components/seo/FAQSection';
 import { RelatedProducts } from '@/components/seo/RelatedProducts';
 import { ProductSchema, OrganizationSchema, WebsiteSchema } from '@/components/seo/ProductSchema';
+import { ProductReviews } from '@/components/ProductReviews';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
@@ -529,6 +530,9 @@ export default function ProductDetail() {
 
         {/* FAQ Section */}
         <FAQSection seo={seo} locale={locale} />
+
+        {/* Product Reviews */}
+        <ProductReviews productId={product.id} />
 
         {/* Related Products */}
         <RelatedProducts 

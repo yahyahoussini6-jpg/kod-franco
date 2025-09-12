@@ -43,8 +43,9 @@ const navigation = [
     name: 'Marketing & SEO', 
     type: 'section',
     items: [
-      { name: 'Blog', href: '/admin/blog', icon: MessageSquare },
+      { name: 'Blog', href: '/admin/blog', icon: Database },
       { name: 'SEO Management', href: '/admin/seo', icon: TestTube },
+      { name: 'Avis Clients', href: '/admin/reviews', icon: MessageSquare },
     ]
   },
   { 
