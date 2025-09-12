@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -57,76 +57,91 @@ export default function ReviewsManagement() {
     }
   });
 
-  const handleApprove = async (reviewId: string) => {
-    try {
-      const { error } = await supabase
-        .from('product_reviews')
-        .update({ is_approved: true })
-        .eq('id', reviewId);
+  const handleApprove = (reviewId: string) => {
+    startTransition(() => {
+      const approveReview = async () => {
+        try {
+          const { error } = await supabase
+            .from('product_reviews')
+            .update({ is_approved: true })
+            .eq('id', reviewId);
 
-      if (error) throw error;
+          if (error) throw error;
 
-      toast({
-        title: "Avis approuvé",
-        description: "L'avis est maintenant visible publiquement."
-      });
-      refetch();
-    } catch (error) {
-      console.error('Error approving review:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'approuver l'avis.",
-        variant: "destructive"
-      });
-    }
+          toast({
+            title: "Avis approuvé",
+            description: "L'avis est maintenant visible publiquement."
+          });
+          refetch();
+        } catch (error) {
+          console.error('Error approving review:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible d'approuver l'avis.",
+            variant: "destructive"
+          });
+        }
+      };
+      approveReview();
+    });
   };
 
-  const handleReject = async (reviewId: string) => {
-    try {
-      const { error } = await supabase
-        .from('product_reviews')
-        .update({ is_approved: false })
-        .eq('id', reviewId);
+  const handleReject = (reviewId: string) => {
+    startTransition(() => {
+      const rejectReview = async () => {
+        try {
+          const { error } = await supabase
+            .from('product_reviews')
+            .update({ is_approved: false })
+            .eq('id', reviewId);
 
-      if (error) throw error;
+          if (error) throw error;
 
-      toast({
-        title: "Avis rejeté",
-        description: "L'avis n'est plus visible publiquement."
-      });
-      refetch();
-    } catch (error) {
-      console.error('Error rejecting review:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de rejeter l'avis.",
-        variant: "destructive"
-      });
-    }
+          toast({
+            title: "Avis rejeté",
+            description: "L'avis n'est plus visible publiquement."
+          });
+          refetch();
+        } catch (error) {
+          console.error('Error rejecting review:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de rejeter l'avis.",
+            variant: "destructive"
+          });
+        }
+      };
+      rejectReview();
+    });
   };
 
-  const handleDelete = async (reviewId: string) => {
-    try {
-      const { error } = await supabase
-        .from('product_reviews')
-        .delete()
-        .eq('id', reviewId);
+  const handleDelete = (reviewId: string) => {
+    startTransition(() => {
+      const deleteReview = async () => {
+        try {
+          const { error } = await supabase
+            .from('product_reviews')
+            .delete()
+            .eq('id', reviewId);
 
-      if (error) throw error;
+          if (error) throw error;
 
-      toast({
-        title: "Avis supprimé",
-        description: "L'avis a été supprimé définitivement."
-      });
-      refetch();
-    } catch (error) {
-      console.error('Error deleting review:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer l'avis.",
-        variant: "destructive"
-      });
-    }
+          toast({
+            title: "Avis supprimé",
+            description: "L'avis a été supprimé définitivement."
+          });
+          refetch();
+        } catch (error) {
+          console.error('Error deleting review:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de supprimer l'avis.",
+            variant: "destructive"
+          });
+        }
+      };
+      deleteReview();
+    });
   };
 
   const renderStars = (rating: number) => {
