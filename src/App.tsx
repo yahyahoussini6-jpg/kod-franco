@@ -42,6 +42,7 @@ import BlogPost from "./pages/BlogPost";
 
 const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
 import AdminBlog from "./pages/admin/Blog";
+import BlogNew from "./pages/admin/BlogNew";
 import SEOManagement from "./pages/admin/SEOManagement";
 import NotFound from "./pages/NotFound";
 
@@ -253,6 +254,7 @@ const App = () => (
                     <Route path="finance" element={<AdminFinance />} />
                     <Route path="shipping" element={<AdminShipping />} />
                     <Route path="blog" element={<AdminBlog />} />
+                    <Route path="blog/new" element={<BlogNew />} />
                     <Route path="seo" element={<SEOManagement />} />
                     <Route path="reviews" element={<AdminReviews />} />
                     <Route path="system" element={<SystemPage />} />
