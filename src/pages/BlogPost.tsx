@@ -154,31 +154,6 @@ export default function BlogPost() {
 
   return (
     <>
-      <SEOHead 
-        seo={{} as any}
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          "headline": post.title,
-          "description": post.excerpt,
-          "image": post.featured_image,
-          "author": {
-            "@type": "Person",
-            "name": post.author?.full_name || "Admin"
-          },
-          "publisher": {
-            "@type": "Organization",
-            "name": "Notre Marque"
-          },
-          "datePublished": post.published_at,
-          "dateModified": post.updated_at,
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": `${window.location.origin}/blog/${post.slug}`
-          }
-        }}
-      />
-
       <Helmet>
         <title>{seoData.title} | Blog</title>
         <meta name="description" content={seoData.description} />
@@ -191,6 +166,31 @@ export default function BlogPost() {
         {seoData.image && <meta property="og:image" content={seoData.image} />}
         {seoData.publishedTime && <meta property="article:published_time" content={seoData.publishedTime} />}
         {seoData.author && <meta property="article:author" content={seoData.author} />}
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            "headline": post.title,
+            "description": post.excerpt,
+            "image": post.featured_image,
+            "author": {
+              "@type": "Person",
+              "name": post.author?.full_name || "Admin"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Notre Marque"
+            },
+            "datePublished": post.published_at,
+            "dateModified": post.updated_at,
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": `${window.location.origin}/blog/${post.slug}`
+            }
+          })}
+        </script>
       </Helmet>
 
       <div className="min-h-screen bg-background">

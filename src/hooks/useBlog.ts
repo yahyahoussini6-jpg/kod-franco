@@ -131,10 +131,14 @@ export function useBlog() {
 
   const getRelatedPosts = async (postId: string, limit = 3): Promise<Partial<BlogPost>[]> => {
     try {
-      const { data, error } = await supabase.rpc('get_related_blog_posts', {
-        p_post_id: postId,
-        p_limit: limit
-      });
+      // Fallback to simple related posts query if RPC fails
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, featured_image, published_at')
+        .eq('status', 'published')
+        .neq('id', postId)
+        .order('published_at', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
       return data || [];
