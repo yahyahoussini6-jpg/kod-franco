@@ -27,6 +27,15 @@ function Model({
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const modelRef = useRef<THREE.Group>(null);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const clockRef = useRef<THREE.Clock>(new THREE.Clock());
+
+  // Animation frame loop
+  useFrame((state, delta) => {
+    if (mixerRef.current) {
+      mixerRef.current.update(delta);
+    }
+  });
 
   useEffect(() => {
     if (hasLoaded || !urlGlb) return;
@@ -40,6 +49,20 @@ function Model({
       urlGlb,
       (loadedGltf) => {
         console.log('3D model loaded successfully:', loadedGltf);
+        
+        // Setup animations if they exist
+        if (loadedGltf.animations && loadedGltf.animations.length > 0) {
+          console.log('Found animations:', loadedGltf.animations.length);
+          const mixer = new THREE.AnimationMixer(loadedGltf.scene);
+          mixerRef.current = mixer;
+          
+          // Play all animations
+          loadedGltf.animations.forEach((clip: THREE.AnimationClip) => {
+            const action = mixer.clipAction(clip);
+            action.play();
+            console.log('Playing animation:', clip.name);
+          });
+        }
         
         // Auto-fit model to viewport with proper scaling
         const tempScene = loadedGltf.scene;
@@ -154,25 +177,9 @@ function CameraRig({ modelRef, progressRef }: { modelRef: React.RefObject<THREE.
   return null;
 }
 
-// Controls wrapper to avoid init before camera/gl are ready
-function Controls({ isMobile }: { isMobile: boolean }) {
-  const { camera, gl } = useThree();
-  // Guard against undefined camera or gl during layout changes/pinning
-  // @ts-ignore
-  if (!camera || !gl || !gl.domElement) return null;
-  return (
-    <OrbitControls 
-      enableZoom={!isMobile} 
-      enablePan={false} 
-      enableRotate={true}
-      minPolarAngle={0.2}
-      maxPolarAngle={Math.PI - 0.2}
-      enableDamping={true}
-      dampingFactor={0.08}
-      rotateSpeed={0.6}
-      target={[0, 0, 0]}
-    />
-  );
+// No controls - animations only
+function NoControls() {
+  return null;
 }
 
 function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDShowcaseProps) {
@@ -186,25 +193,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
 
   console.log('ThreeDShowcase render:', { urlGlb, loading, error });
 
-  // Safe OrbitControls that only mounts when R3F context (camera, gl.domElement) is ready
-  const SafeControls: React.FC = () => {
-    const { camera, gl } = useThree();
-    // @ts-ignore - runtime guard
-    if (!camera || !gl || !gl.domElement) return null;
-    return (
-      <OrbitControls 
-        enableZoom={!isMobile} 
-        enablePan={false} 
-        enableRotate
-        enableDamping
-        dampingFactor={0.08}
-        rotateSpeed={0.6}
-        minPolarAngle={0.2}
-        maxPolarAngle={Math.PI - 0.2}
-        target={[0, 0, 0]}
-      />
-    );
-  };
+  // No controls needed for product display
 
 
   useEffect(() => {
@@ -360,10 +349,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
                   resolution={256}
                 />
               </Suspense>
-              
-              {/* Orbit Controls */}
-              {/* Orbit Controls (guarded) */}
-              <SafeControls />
+              {/* No controls - just display animated model */}
 
               {/* Camera rig for scroll-driven animation */}
               {enableScroll && (
