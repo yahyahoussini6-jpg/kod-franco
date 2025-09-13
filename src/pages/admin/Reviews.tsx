@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Star, Trash2, CheckCircle, XCircle, ShieldCheck, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/format';
 import {
@@ -138,6 +138,35 @@ export default function ReviewsManagement() {
     }
   };
 
+  const handleToggleVerified = async (reviewId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({ is_verified: !currentStatus })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      toast({
+        title: !currentStatus ? "Avis marqué comme vérifié" : "Vérification retirée",
+        description: !currentStatus 
+          ? "L'avis est maintenant marqué comme achat vérifié." 
+          : "L'avis n'est plus marqué comme achat vérifié."
+      });
+      
+      startTransition(() => {
+        refetch();
+      });
+    } catch (error) {
+      console.error('Error toggling verification:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le statut de vérification.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex space-x-1">
@@ -223,7 +252,31 @@ export default function ReviewsManagement() {
                   </p>
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
+                  {/* Verification Toggle Button */}
+                  <Button
+                    size="sm"
+                    variant={review.is_verified ? "default" : "outline"}
+                    onClick={() => handleToggleVerified(review.id, review.is_verified)}
+                    className={review.is_verified 
+                      ? "bg-blue-600 hover:bg-blue-700" 
+                      : "border-blue-300 text-blue-600 hover:bg-blue-50"
+                    }
+                  >
+                    {review.is_verified ? (
+                      <>
+                        <ShieldCheck className="w-4 h-4 mr-1" />
+                        Vérifié
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="w-4 h-4 mr-1" />
+                        Marquer vérifié
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Approval/Rejection Buttons */}
                   {!review.is_approved && (
                     <Button
                       size="sm"
@@ -246,6 +299,7 @@ export default function ReviewsManagement() {
                     </Button>
                   )}
 
+                  {/* Delete Button */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button size="sm" variant="destructive">
