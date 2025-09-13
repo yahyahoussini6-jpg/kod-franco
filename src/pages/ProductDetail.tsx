@@ -19,6 +19,7 @@ import { FAQSection } from '@/components/seo/FAQSection';
 import { RelatedProducts } from '@/components/seo/RelatedProducts';
 import { ProductSchema, OrganizationSchema, WebsiteSchema } from '@/components/seo/ProductSchema';
 import { ProductReviews } from '@/components/ProductReviews';
+import { ProductRatingSummary } from '@/components/ProductRatingSummary';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
@@ -218,15 +219,8 @@ export default function ProductDetail() {
                   </div>
                 )}
 
-                {/* Social Proof */}
-                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-                  <div className="flex items-center gap-2 text-blue-800 text-sm">
-                    <div className="flex text-yellow-400">★★★★★</div>
-                    <span className="font-medium">4.8/5</span>
-                    <span className="text-blue-600">• 127+ avis clients</span>
-                  </div>
-                  <p className="text-blue-700 text-xs mt-1">"Excellent produit, conforme à la description"</p>
-                </div>
+                {/* Real Social Proof from Database */}
+                <ProductRatingSummary productId={product.id} />
               </div>
             ) : videos.length > 0 ? (
               <div className="aspect-square w-full overflow-hidden rounded-xl bg-muted shadow-2xl border">
