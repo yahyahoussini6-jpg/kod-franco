@@ -34,9 +34,9 @@ export function SEOHead({ seo, structuredData }: SEOHeadProps) {
       <meta property="og:locale" content={seo.locale} />
 
       {/* Product-specific Open Graph */}
-      <meta property="product:price:amount" content={seo.price_mad.toString()} />
+      {seo.price_mad && <meta property="product:price:amount" content={seo.price_mad.toString()} />}
       <meta property="product:price:currency" content="MAD" />
-      <meta property="product:availability" content={seo.availability.toLowerCase()} />
+      {seo.availability && <meta property="product:availability" content={seo.availability.toLowerCase()} />}
       {seo.brand && <meta property="product:brand" content={seo.brand} />}
 
       {/* Twitter */}
