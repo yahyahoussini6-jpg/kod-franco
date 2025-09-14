@@ -288,7 +288,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
 
   if (!urlGlb) {
     return (
-      <div className="h-[480px] w-full border rounded-lg overflow-hidden bg-background flex items-center justify-center">
+      <div className="h-[480px] w-full overflow-hidden flex items-center justify-center">
         <div className="text-muted-foreground">Aucun modèle 3D disponible</div>
       </div>
     );
@@ -297,7 +297,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
   return (
     <div 
       ref={containerRef}
-      className="h-screen w-full border rounded-lg overflow-hidden bg-background relative"
+      className="h-screen w-full overflow-hidden relative"
       id={containerId}
     >
       {error ? (
@@ -319,7 +319,7 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
       ) : (
         <>
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="text-muted-foreground">Chargement du modèle 3D...</div>
             </div>
           )}
@@ -335,7 +335,8 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
               style={{ 
                 width: '100%', 
                 height: '100%',
-                display: 'block'
+                display: 'block',
+                background: 'transparent'
               }}
               gl={{ 
                 preserveDrawingBuffer: true,
