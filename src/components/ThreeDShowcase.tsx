@@ -12,9 +12,10 @@ interface ThreeDShowcaseProps {
   containerId?: string;
 }
 
-// Animation component to handle GLB animations
-function AnimationController({ gltf }: { gltf: any }) {
+// Animation component to handle GLB animations with scroll control
+function AnimationController({ gltf, progressRef, enableScroll }: { gltf: any; progressRef?: React.MutableRefObject<number>; enableScroll?: boolean }) {
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const actionsRef = useRef<THREE.AnimationAction[]>([]);
 
   useEffect(() => {
     if (!gltf || !gltf.animations || gltf.animations.length === 0) return;
@@ -22,12 +23,20 @@ function AnimationController({ gltf }: { gltf: any }) {
     console.log('Setting up animations:', gltf.animations.length);
     const mixer = new THREE.AnimationMixer(gltf.scene);
     mixerRef.current = mixer;
+    actionsRef.current = [];
     
-    // Play all animations
+    // Setup animations but don't auto-play if scroll-controlled
     gltf.animations.forEach((clip: THREE.AnimationClip) => {
       const action = mixer.clipAction(clip);
-      action.play();
-      console.log('Playing animation:', clip.name);
+      if (enableScroll) {
+        // Don't auto-play, we'll control time manually
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+      } else {
+        action.play();
+      }
+      actionsRef.current.push(action);
+      console.log('Setup animation:', clip.name);
     });
 
     return () => {
@@ -35,13 +44,31 @@ function AnimationController({ gltf }: { gltf: any }) {
         mixerRef.current.stopAllAction();
         mixerRef.current = null;
       }
+      actionsRef.current = [];
     };
-  }, [gltf]);
+  }, [gltf, enableScroll]);
 
   // Animation frame loop
   useFrame((state, delta) => {
     if (mixerRef.current) {
-      mixerRef.current.update(delta);
+      if (enableScroll && progressRef) {
+        // Control animation time based on scroll progress
+        const progress = progressRef.current || 0;
+        actionsRef.current.forEach((action) => {
+          if (action.getClip()) {
+            const duration = action.getClip().duration;
+            const time = progress * duration;
+            action.time = time;
+            action.enabled = true;
+            action.setEffectiveTimeScale(0); // Prevent auto-advance
+            action.setEffectiveWeight(1);
+          }
+        });
+        mixerRef.current.update(0); // Update with 0 delta to apply manual time
+      } else {
+        // Normal continuous animation
+        mixerRef.current.update(delta);
+      }
     }
   });
 
@@ -53,11 +80,15 @@ function Model({
   onError, 
   onLoad,
   groupRef,
+  progressRef,
+  enableScroll,
 }: { 
   urlGlb: string; 
   onError: (error: any) => void; 
   onLoad: (bounds: { center: THREE.Vector3; radius: number; scale: number }) => void;
   groupRef?: React.MutableRefObject<THREE.Group | null>;
+  progressRef?: React.MutableRefObject<number>;
+  enableScroll?: boolean;
 }) {
   const [gltf, setGltf] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,7 +194,7 @@ function Model({
   return (
     <group ref={(el) => { modelRef.current = el as any; if (groupRef) (groupRef as any).current = el as any; }}>
       <primitive object={gltf.scene} />
-      <AnimationController gltf={gltf} />
+      <AnimationController gltf={gltf} progressRef={progressRef} enableScroll={enableScroll} />
     </group>
   );
 }
@@ -352,6 +383,8 @@ function ThreeDShowcase({ urlGlb, enableScroll = false, containerId }: ThreeDSho
                   onError={handleError} 
                   onLoad={(b) => { boundsRef.current = b; handleLoad(b); }}
                   groupRef={modelGroupRef}
+                  progressRef={scrollProgressRef}
+                  enableScroll={enableScroll}
                 />
                 
                 {/* Contact Shadows */}
