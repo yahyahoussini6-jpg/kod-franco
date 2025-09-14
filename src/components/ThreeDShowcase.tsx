@@ -12,6 +12,42 @@ interface ThreeDShowcaseProps {
   containerId?: string;
 }
 
+// Animation component to handle GLB animations
+function AnimationController({ gltf }: { gltf: any }) {
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+
+  useEffect(() => {
+    if (!gltf || !gltf.animations || gltf.animations.length === 0) return;
+    
+    console.log('Setting up animations:', gltf.animations.length);
+    const mixer = new THREE.AnimationMixer(gltf.scene);
+    mixerRef.current = mixer;
+    
+    // Play all animations
+    gltf.animations.forEach((clip: THREE.AnimationClip) => {
+      const action = mixer.clipAction(clip);
+      action.play();
+      console.log('Playing animation:', clip.name);
+    });
+
+    return () => {
+      if (mixerRef.current) {
+        mixerRef.current.stopAllAction();
+        mixerRef.current = null;
+      }
+    };
+  }, [gltf]);
+
+  // Animation frame loop
+  useFrame((state, delta) => {
+    if (mixerRef.current) {
+      mixerRef.current.update(delta);
+    }
+  });
+
+  return null;
+}
+
 function Model({ 
   urlGlb, 
   onError, 
@@ -27,15 +63,6 @@ function Model({
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const modelRef = useRef<THREE.Group>(null);
-  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
-  const clockRef = useRef<THREE.Clock>(new THREE.Clock());
-
-  // Animation frame loop
-  useFrame((state, delta) => {
-    if (mixerRef.current) {
-      mixerRef.current.update(delta);
-    }
-  });
 
   useEffect(() => {
     if (hasLoaded || !urlGlb) return;
@@ -49,20 +76,6 @@ function Model({
       urlGlb,
       (loadedGltf) => {
         console.log('3D model loaded successfully:', loadedGltf);
-        
-        // Setup animations if they exist
-        if (loadedGltf.animations && loadedGltf.animations.length > 0) {
-          console.log('Found animations:', loadedGltf.animations.length);
-          const mixer = new THREE.AnimationMixer(loadedGltf.scene);
-          mixerRef.current = mixer;
-          
-          // Play all animations
-          loadedGltf.animations.forEach((clip: THREE.AnimationClip) => {
-            const action = mixer.clipAction(clip);
-            action.play();
-            console.log('Playing animation:', clip.name);
-          });
-        }
         
         // Auto-fit model to viewport with proper scaling
         const tempScene = loadedGltf.scene;
@@ -150,6 +163,7 @@ function Model({
   return (
     <group ref={(el) => { modelRef.current = el as any; if (groupRef) (groupRef as any).current = el as any; }}>
       <primitive object={gltf.scene} />
+      <AnimationController gltf={gltf} />
     </group>
   );
 }
