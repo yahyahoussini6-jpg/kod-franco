@@ -1508,6 +1508,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_return_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_order_by_tracking: {
         Args: { p_code: string }
         Returns: {
