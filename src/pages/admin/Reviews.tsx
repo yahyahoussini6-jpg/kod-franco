@@ -1,4 +1,4 @@
-import React, { useState, startTransition } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -71,9 +71,7 @@ export default function ReviewsManagement() {
         description: "L'avis est maintenant visible publiquement."
       });
       
-      startTransition(() => {
-        refetch();
-      });
+      refetch();
     } catch (error) {
       console.error('Error approving review:', error);
       toast({
@@ -98,9 +96,7 @@ export default function ReviewsManagement() {
         description: "L'avis n'est plus visible publiquement."
       });
       
-      startTransition(() => {
-        refetch();
-      });
+      refetch();
     } catch (error) {
       console.error('Error rejecting review:', error);
       toast({
@@ -125,9 +121,7 @@ export default function ReviewsManagement() {
         description: "L'avis a été supprimé définitivement."
       });
       
-      startTransition(() => {
-        refetch();
-      });
+      refetch();
     } catch (error) {
       console.error('Error deleting review:', error);
       toast({
@@ -154,9 +148,7 @@ export default function ReviewsManagement() {
           : "L'avis n'est plus marqué comme achat vérifié."
       });
       
-      startTransition(() => {
-        refetch();
-      });
+      refetch();
     } catch (error) {
       console.error('Error toggling verification:', error);
       toast({
