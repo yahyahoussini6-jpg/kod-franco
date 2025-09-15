@@ -18,7 +18,8 @@ import {
   Database,
   TestTube,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  TrendingUp
 } from 'lucide-react';
 
 import { MessageSquare } from 'lucide-react';
@@ -34,6 +35,7 @@ const navigation = [
     items: [
       { name: 'Inventaire', href: '/admin/inventory', icon: Warehouse },
       { name: 'Clients (CRM)', href: '/admin/clients', icon: UserCheck },
+      { name: 'Leads - Wana Buy', href: '/admin/leads', icon: TrendingUp },
       { name: 'Retours/RTO', href: '/admin/returns', icon: RotateCcw },
       { name: 'Finance', href: '/admin/finance', icon: Calculator },
       { name: 'Expédition', href: '/admin/shipping', icon: Truck },

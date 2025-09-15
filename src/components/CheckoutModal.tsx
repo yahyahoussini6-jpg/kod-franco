@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,6 +42,7 @@ interface CheckoutModalProps {
 export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutModalProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const leadIdRef = useRef<string | null>(null);
   
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
@@ -55,6 +56,68 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
 
   const total = items.reduce((sum, item) => sum + item.product_prix * item.quantite, 0);
 
+  // Create or update lead when form data changes
+  const updateLead = async (data: Partial<CheckoutForm>) => {
+    try {
+      const currentValues = form.getValues();
+      const completedFields = Object.values(data).filter(value => value && value.trim() !== '').length;
+      const formCompletionPercentage = Math.round((completedFields / 4) * 100);
+
+      const leadData = {
+        nom: data.nom || null,
+        phone: data.phone || null,
+        ville: data.ville || null,
+        adresse: data.adresse || null,
+        cart_items: items as any,
+        total_value: total,
+        form_completion_percentage: formCompletionPercentage,
+        last_activity: new Date().toISOString(),
+      };
+
+      if (leadIdRef.current) {
+        // Update existing lead
+        await supabase
+          .from('leads')
+          .update(leadData)
+          .eq('id', leadIdRef.current);
+      } else {
+        // Create new lead
+        const { data: newLead, error } = await supabase
+          .from('leads')
+          .insert(leadData)
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        leadIdRef.current = newLead.id;
+      }
+    } catch (error) {
+      console.error('Failed to update lead:', error);
+    }
+  };
+
+  // Watch form changes and update lead
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const subscription = form.watch((data) => {
+      // Only update if at least one field has content
+      const hasContent = Object.values(data).some(value => value && value.trim() !== '');
+      if (hasContent) {
+        updateLead(data);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isOpen, items, total]);
+
+  // Reset lead ref when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      leadIdRef.current = null;
+    }
+  }, [isOpen]);
+
   const onSubmit = async (data: CheckoutForm) => {
     try {
       const { data: result, error } = await supabase.rpc('place_order', {
@@ -66,6 +129,18 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
 
       if (result && result.length > 0) {
         const { code_suivi } = result[0];
+        
+        // Mark lead as converted if it exists
+        if (leadIdRef.current) {
+          await supabase
+            .from('leads')
+            .update({ 
+              status: 'converted',
+              converted_to_order_id: result[0].order_id 
+            })
+            .eq('id', leadIdRef.current);
+        }
+
         toast({
           title: "Commande créée",
           description: `Code de suivi : ${code_suivi}`,

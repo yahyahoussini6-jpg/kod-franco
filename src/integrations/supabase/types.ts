@@ -749,6 +749,57 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          adresse: string | null
+          cart_items: Json | null
+          converted_to_order_id: string | null
+          created_at: string
+          form_completion_percentage: number | null
+          id: string
+          last_activity: string
+          nom: string | null
+          phone: string | null
+          status: string
+          total_value: number | null
+          updated_at: string
+          utm_source: string | null
+          ville: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          cart_items?: Json | null
+          converted_to_order_id?: string | null
+          created_at?: string
+          form_completion_percentage?: number | null
+          id?: string
+          last_activity?: string
+          nom?: string | null
+          phone?: string | null
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+          utm_source?: string | null
+          ville?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          cart_items?: Json | null
+          converted_to_order_id?: string | null
+          created_at?: string
+          form_completion_percentage?: number | null
+          id?: string
+          last_activity?: string
+          nom?: string | null
+          phone?: string | null
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+          utm_source?: string | null
+          ville?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           category: string | null

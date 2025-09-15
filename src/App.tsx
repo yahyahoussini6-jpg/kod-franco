@@ -28,6 +28,7 @@ import AdminClients from "./pages/admin/Clients";
 import AdminReturns from "./pages/admin/Returns";
 import AdminFinance from "./pages/admin/Finance";
 import AdminShipping from "./pages/admin/Shipping";
+import AdminLeads from "./pages/admin/Leads";
 import SystemPage from "./pages/admin/System";
 import WhatsAppSettings from "./pages/admin/WhatsAppSettings";
 import About from "./pages/About";
@@ -250,6 +251,7 @@ const App = () => (
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="inventory" element={<AdminInventory />} />
                     <Route path="clients" element={<AdminClients />} />
+                    <Route path="leads" element={<AdminLeads />} />
                     <Route path="returns" element={<AdminReturns />} />
                     <Route path="finance" element={<AdminFinance />} />
                     <Route path="shipping" element={<AdminShipping />} />
