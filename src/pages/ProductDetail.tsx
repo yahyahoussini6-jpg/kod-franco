@@ -20,6 +20,7 @@ import { RelatedProducts } from '@/components/seo/RelatedProducts';
 import { ProductSchema, OrganizationSchema, WebsiteSchema } from '@/components/seo/ProductSchema';
 import { ProductReviews } from '@/components/ProductReviews';
 import { ProductRatingSummary } from '@/components/ProductRatingSummary';
+import { ProductRecommendations } from '@/components/ProductRecommendations';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
@@ -527,6 +528,12 @@ export default function ProductDetail() {
 
         {/* Product Reviews */}
         <ProductReviews productId={product.id} />
+
+        {/* Upsells and Cross-sells */}
+        <ProductRecommendations 
+          productId={product.id} 
+          currentProductPrice={product.prix}
+        />
 
         {/* Related Products */}
         <RelatedProducts 

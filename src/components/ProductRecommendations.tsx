@@ -21,6 +21,7 @@ interface ProductRelationship {
   id: string;
   related_product_id: string;
   relationship_type: 'upsell' | 'cross_sell';
+  products: Product;
   related_product: Product;
 }
 
@@ -41,7 +42,7 @@ export function ProductRecommendations({ productId, currentProductPrice }: Produ
           id,
           related_product_id,
           relationship_type,
-          related_product:products!product_relationships_related_product_id_fkey(
+          products!fk_product_relationships_related_product_id(
             id,
             nom,
             prix,
@@ -54,7 +55,10 @@ export function ProductRecommendations({ productId, currentProductPrice }: Produ
         .order('display_order');
       
       if (error) throw error;
-      return data as ProductRelationship[];
+      return (data || []).map(item => ({
+        ...item,
+        related_product: item.products
+      })) as ProductRelationship[];
     },
     enabled: !!productId
   });

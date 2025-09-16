@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/format';
 import ModelViewer3D from '@/components/ModelViewer3D';
+import { ProductRelationships } from '@/components/admin/ProductRelationships';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const productSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
@@ -323,302 +325,338 @@ export default function AdminProducts() {
               </DialogTitle>
             </DialogHeader>
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column - Basic Info */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Informations de base</h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="nom"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e);
-                                // Auto-generate slug
-                                if (!editingProduct) {
-                                  form.setValue('slug', generateSlug(e.target.value));
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug (URL)</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <RichTextEditor
-                              value={field.value || ''}
-                              onChange={field.onChange}
-                              placeholder="Entrez la description du produit..."
-                              className="min-h-[150px]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="prix"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prix (MAD)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="category_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Catégorie</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner une catégorie" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="none">Aucune catégorie</SelectItem>
-                              {categories?.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="en_stock"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel>En stock</FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                      <FormLabel>Images du produit</FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          accept="image/png,image/jpeg,image/jpg,image/webp"
-                          multiple
-                          onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
-                          className="flex-1"
+            <Tabs defaultValue="general" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="general">Informations générales</TabsTrigger>
+                <TabsTrigger value="relationships" disabled={!editingProduct}>
+                  Upsell & Cross-sell
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="general">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Informations de base */}
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="nom"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nom du produit *</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nom du produit" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        {editingProduct?.media && Array.isArray(editingProduct.media) && 
-                         editingProduct.media.filter((m: any) => m.type === 'image').length > 0 && (
-                          <Badge variant="secondary">
-                            <Upload className="h-3 w-3 mr-1" />
-                            {editingProduct.media.filter((m: any) => m.type === 'image').length} images
-                          </Badge>
+
+                        <FormField
+                          control={form.control}
+                          name="slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Slug (URL) *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  placeholder="slug-du-produit"
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    if (!editingProduct) {
+                                      const slugValue = generateSlug(e.target.value);
+                                      form.setValue('slug', slugValue);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="prix"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Prix (MAD) *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  placeholder="0.00" 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="category_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Catégorie</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choisir une catégorie" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {categories?.map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="en_stock"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>En stock</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Description et média */}
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  value={field.value || ''}
+                                  onChange={field.onChange}
+                                  placeholder="Description du produit..."
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Upload d'images */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Images du produit</h3>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                        <input
+                          type="file"
+                          id="images"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            setImageFiles(files);
+                          }}
+                          className="hidden"
+                        />
+                        <label htmlFor="images" className="cursor-pointer block text-center">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <span className="mt-2 block text-sm font-medium text-gray-900">
+                            Cliquer pour ajouter des images
+                          </span>
+                          <span className="mt-1 block text-sm text-gray-500">
+                            PNG, JPG, GIF jusqu'à 10MB chacune
+                          </span>
+                        </label>
+                        {imageFiles.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-sm text-gray-600">
+                              {imageFiles.length} image(s) sélectionnée(s)
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {imageFiles.map((file, index) => (
+                                <div key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {file.name}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      {editingProduct?.media && Array.isArray(editingProduct.media) && (
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          {editingProduct.media
-                            .filter((m: any) => m.type === 'image')
-                            .slice(0, 4)
-                            .map((image: any, index: number) => (
-                            <img
-                              key={index}
-                              src={image.url}
-                              alt={`Product image ${index + 1}`}
-                              className="w-full h-20 object-cover rounded border"
-                            />
+                    </div>
+
+                    {/* Upload de modèle 3D */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Modèle 3D (optionnel)</h3>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                        <input
+                          type="file"
+                          id="model"
+                          accept=".glb,.gltf"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            setModelFile(file || null);
+                          }}
+                          className="hidden"
+                        />
+                        <label htmlFor="model" className="cursor-pointer block text-center">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <span className="mt-2 block text-sm font-medium text-gray-900">
+                            Cliquer pour ajouter un modèle 3D
+                          </span>
+                          <span className="mt-1 block text-sm text-gray-500">
+                            GLB ou GLTF uniquement
+                          </span>
+                        </label>
+                        {modelFile && (
+                          <div className="mt-4">
+                            <p className="text-sm text-gray-600">
+                              Modèle sélectionné: {modelFile.name}
+                            </p>
+                          </div>
+                        )}
+                        {editingProduct?.model_url && !modelFile && (
+                          <div className="mt-4">
+                            <p className="text-sm text-green-600">
+                              Modèle 3D existant
+                            </p>
+                            <div className="mt-2">
+                              <ModelViewer3D 
+                                urlGlb={editingProduct.model_url} 
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Variables (couleurs et tailles) */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">Variables du produit</h3>
+                      
+                      {/* Couleurs */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          <label className="font-medium">Couleurs disponibles</label>
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Nouvelle couleur"
+                            value={newColor}
+                            onChange={(e) => setNewColor(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addColor();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={addColor} variant="outline">
+                            Ajouter
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(form.watch('variables')?.colors || []).map((color, index) => (
+                            <Badge key={index} variant="outline" className="flex items-center gap-1">
+                              {color}
+                              <X 
+                                className="h-3 w-3 cursor-pointer" 
+                                onClick={() => removeColor(index)}
+                              />
+                            </Badge>
                           ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* 3D Model Upload */}
-                    <div className="space-y-2">
-                      <FormLabel>Modèle 3D (.glb)</FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          accept=".glb"
-                          onChange={(e) => setModelFile(e.target.files?.[0] || null)}
-                          className="flex-1"
-                        />
-                        {editingProduct?.model_url && (
-                          <Badge variant="secondary">
-                            <Upload className="h-3 w-3 mr-1" />
-                            Modèle existant
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column - Variables */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Variables du produit</h3>
-                    
-                    {/* Colors */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Palette className="h-4 w-4" />
-                        <FormLabel>Couleurs disponibles</FormLabel>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Ajouter une couleur"
-                          value={newColor}
-                          onChange={(e) => setNewColor(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
-                        />
-                        <Button
-                          type="button"
-                          onClick={addColor}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {form.watch('variables.colors')?.map((color, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            {color}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0"
-                              onClick={() => removeColor(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
+                      {/* Tailles */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Ruler className="h-4 w-4" />
+                          <label className="font-medium">Tailles disponibles</label>
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Nouvelle taille"
+                            value={newSize}
+                            onChange={(e) => setNewSize(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addSize();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={addSize} variant="outline">
+                            Ajouter
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(form.watch('variables')?.sizes || []).map((size, index) => (
+                            <Badge key={index} variant="outline" className="flex items-center gap-1">
+                              {size}
+                              <X 
+                                className="h-3 w-3 cursor-pointer" 
+                                onClick={() => removeSize(index)}
+                              />
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Sizes */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Ruler className="h-4 w-4" />
-                        <FormLabel>Tailles disponibles</FormLabel>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Ajouter une taille"
-                          value={newSize}
-                          onChange={(e) => setNewSize(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSize())}
-                        />
-                        <Button
-                          type="button"
-                          onClick={addSize}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {form.watch('variables.sizes')?.map((size, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            {size}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0"
-                              onClick={() => removeSize(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="flex gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowDialog(false);
+                          setModelFile(null);
+                          setImageFiles([]);
+                          setNewColor('');
+                          setNewSize('');
+                        }}
+                        className="flex-1"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={productMutation.isPending || uploading}
+                      >
+                        {uploading ? 'Téléchargement...' : productMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
+                      </Button>
                     </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-6 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowDialog(false);
-                      setModelFile(null);
-                      setImageFiles([]);
-                      setNewColor('');
-                      setNewSize('');
-                    }}
-                    className="flex-1"
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={productMutation.isPending || uploading}
-                  >
-                    {uploading ? 'Téléchargement...' : productMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                  </form>
+                </Form>
+              </TabsContent>
+              
+              <TabsContent value="relationships">
+                {editingProduct && (
+                  <ProductRelationships productId={editingProduct.id} />
+                )}
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
