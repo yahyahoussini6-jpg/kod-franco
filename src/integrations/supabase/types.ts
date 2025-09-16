@@ -959,6 +959,36 @@ export type Database = {
         }
         Relationships: []
       }
+      product_relationships: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          product_id: string
+          related_product_id: string
+          relationship_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          product_id: string
+          related_product_id: string
+          relationship_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          product_id?: string
+          related_product_id?: string
+          relationship_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           comment: string | null
