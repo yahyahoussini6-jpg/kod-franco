@@ -6,13 +6,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { CheckoutModal } from '@/components/CheckoutModal';
+import { CartBundleItem } from '@/components/CartBundleItem';
 import { formatPrice } from '@/lib/format';
 
 export default function Cart() {
-  const { items, removeItem, updateQuantity, clearCart, total } = useCart();
+  const { 
+    items, 
+    bundles, 
+    removeItem, 
+    removeBundle, 
+    updateQuantity, 
+    updateBundleQuantity, 
+    clearCart, 
+    total, 
+    bundleTotal, 
+    grandTotal, 
+    totalSavings 
+  } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
 
-  if (items.length === 0) {
+  if (items.length === 0 && bundles.length === 0) {
     return (
       <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="text-center py-8 md:py-12">
@@ -41,29 +54,39 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Articles du panier */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Regular Items */}
           {items.map((item) => (
-            <Card key={item.product_id}>
+            <Card key={`${item.product_id}-${JSON.stringify(item.variables || {})}`}>
               <CardContent className="p-3 md:p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base md:text-lg truncate">{item.product_nom}</h3>
-                  {item.variables && (item.variables.color || item.variables.size) && (
-                    <div className="flex gap-2 mt-1">
-                      {item.variables.color && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.variables.color}
-                        </Badge>
-                      )}
-                      {item.variables.size && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.variables.size}
-                        </Badge>
-                      )}
-                    </div>
+                <div className="flex items-center gap-3 flex-1">
+                  {item.media?.[0] && (
+                    <img 
+                      src={item.media[0]}
+                      alt={item.product_nom}
+                      className="w-16 h-16 object-cover rounded border"
+                    />
                   )}
-                  <p className="text-primary font-semibold text-sm md:text-base">
-                    {formatPrice(item.product_prix)}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base md:text-lg truncate">{item.product_nom}</h3>
+                    {item.variables && (item.variables.color || item.variables.size) && (
+                      <div className="flex gap-2 mt-1">
+                        {item.variables.color && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.variables.color}
+                          </Badge>
+                        )}
+                        {item.variables.size && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.variables.size}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-primary font-semibold text-sm md:text-base">
+                      {formatPrice(item.product_prix)}
+                    </p>
+                  </div>
                 </div>
 
                   <div className="flex items-center justify-between w-full sm:w-auto gap-4">
@@ -111,6 +134,16 @@ export default function Cart() {
               </CardContent>
             </Card>
           ))}
+          
+          {/* Bundle Items */}
+          {bundles.map((bundle) => (
+            <CartBundleItem
+              key={bundle.bundle_id}
+              bundle={bundle}
+              onUpdateQuantity={updateBundleQuantity}
+              onRemove={removeBundle}
+            />
+          ))}
         </div>
 
         {/* Récapitulatif */}
@@ -120,6 +153,7 @@ export default function Cart() {
               <h3 className="font-semibold text-lg md:text-xl mb-4">Récapitulatif</h3>
               
               <div className="space-y-2 mb-4">
+                {/* Regular Items */}
                 {items.map((item) => (
                   <div key={`${item.product_id}-${JSON.stringify(item.variables || {})}`} className="flex justify-between text-xs md:text-sm">
                     <span className="truncate mr-2">
@@ -133,12 +167,48 @@ export default function Cart() {
                     <span className="font-medium">{formatPrice(item.product_prix * item.quantite)}</span>
                   </div>
                 ))}
+
+                {/* Bundle Items */}
+                {bundles.map((bundle) => (
+                  <div key={bundle.bundle_id} className="space-y-1 py-2 border-l-2 border-primary/20 pl-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium text-primary">{bundle.bundle_name} x{bundle.primary_item.quantite}</span>
+                      <span className="font-medium text-primary">{formatPrice(bundle.bundle_total * bundle.primary_item.quantite)}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground ml-2">
+                      <div>• {bundle.primary_item.product_nom}</div>
+                      <div>• {bundle.secondary_item.product_nom} (réduit)</div>
+                    </div>
+                    <div className="flex justify-between text-xs text-destructive">
+                      <span>Économie:</span>
+                      <span>-{formatPrice(bundle.total_savings * bundle.primary_item.quantite)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="border-t pt-4 mb-6">
-                <div className="flex justify-between text-lg md:text-xl font-bold">
+              <div className="border-t pt-4 space-y-2 mb-6">
+                {items.length > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Articles individuels:</span>
+                    <span>{formatPrice(total)}</span>
+                  </div>
+                )}
+                {bundles.length > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Packs promotionnels:</span>
+                    <span>{formatPrice(bundleTotal)}</span>
+                  </div>
+                )}
+                {totalSavings > 0 && (
+                  <div className="flex justify-between text-sm text-destructive">
+                    <span>Économies totales:</span>
+                    <span className="font-semibold">-{formatPrice(totalSavings)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg md:text-xl font-bold border-t pt-2">
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(total)}</span>
+                  <span className="text-primary">{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 
@@ -162,6 +232,7 @@ export default function Cart() {
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         items={items}
+        bundles={bundles}
         onSuccess={clearCart}
       />
     </div>

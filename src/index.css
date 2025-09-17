@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "./styles/theme.css";
-
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -104,6 +102,95 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* High contrast adjustments */
+  [data-high-contrast="true"] {
+    --border: hsl(var(--foreground));
+    --ring: hsl(var(--foreground));
+  }
+  
+  [data-high-contrast="true"] * {
+    border-width: 2px !important;
+  }
+  
+  [data-high-contrast="true"] .shadow-sm,
+  [data-high-contrast="true"] .shadow,
+  [data-high-contrast="true"] .shadow-md,
+  [data-high-contrast="true"] .shadow-lg {
+    box-shadow: 0 0 0 2px hsl(var(--foreground)) !important;
+  }
+
+  /* Animation preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus styles using ring color */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Custom status CSS variables for easy theming */
+  :root {
+    --status-nouvelle-bg: var(--status-nouvelle);
+    --status-nouvelle-fg: var(--status-nouvelle-foreground);
+    --status-confirmee-bg: var(--status-confirmee);
+    --status-confirmee-fg: var(--status-confirmee-foreground);
+    --status-en-preparation-bg: var(--status-en-preparation);
+    --status-en-preparation-fg: var(--status-en-preparation-foreground);
+    --status-expediee-bg: var(--status-expediee);
+    --status-expediee-fg: var(--status-expediee-foreground);
+    --status-livree-bg: var(--status-livree);
+    --status-livree-fg: var(--status-livree-foreground);
+    --status-annulee-bg: var(--status-annulee);
+    --status-annulee-fg: var(--status-annulee-foreground);
+    --status-retournee-bg: var(--status-retournee);
+    --status-retournee-fg: var(--status-retournee-foreground);
+  }
+
+  /* Utility classes for theme-aware components */
+  .theme-card {
+    @apply bg-card text-card-foreground border border-border rounded-lg;
+  }
+  
+  .theme-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  
+  .theme-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  
+  .theme-link {
+    @apply text-primary hover:text-primary/80 underline-offset-4 hover:underline;
+  }
+  
+  .theme-muted {
+    @apply text-muted-foreground;
+  }
+  
+  .theme-destructive {
+    @apply text-destructive;
+  }
+  
+  .theme-success {
+    @apply text-success;
+  }
+  
+  .theme-warning {
+    @apply text-warning;
+  }
+  
+  .theme-info {
+    @apply text-info;
+  }
 }
 
 @layer utilities {
@@ -139,5 +226,44 @@ All colors MUST be HSL.
   html {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* RTL Support */
+  [dir="rtl"] {
+    direction: rtl;
+  }
+  
+  [dir="rtl"] .flex {
+    flex-direction: row-reverse;
+  }
+  
+  [dir="rtl"] .grid {
+    direction: ltr;
+  }
+  
+  [dir="rtl"] .text-left {
+    text-align: right;
+  }
+  
+  [dir="rtl"] .text-right {
+    text-align: left;
+  }
+
+  /* Bundle offer specific styles */
+  .bundle-glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
+  }
+  
+  .bundle-animate {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
   }
 }

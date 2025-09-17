@@ -21,6 +21,7 @@ import { ProductSchema, OrganizationSchema, WebsiteSchema } from '@/components/s
 import { ProductReviews } from '@/components/ProductReviews';
 import { ProductRatingSummary } from '@/components/ProductRatingSummary';
 import { ProductRecommendations } from '@/components/ProductRecommendations';
+import { BundleOffersSection } from '@/components/BundleOffersSection';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678'; // Default number
 
@@ -528,6 +529,12 @@ export default function ProductDetail() {
 
         {/* Product Reviews */}
         <ProductReviews productId={product.id} />
+
+        {/* Bundle Offers */}
+        <BundleOffersSection 
+          productId={product.id} 
+          className="mt-12"
+        />
 
         {/* Upsells and Cross-sells */}
         <ProductRecommendations 

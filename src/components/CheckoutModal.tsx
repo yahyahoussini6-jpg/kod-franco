@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/lib/format';
 import type { CartItem } from '@/context/CartContext';
+import type { CartBundle } from '@/types/bundle';
 
 const checkoutSchema = z.object({
   nom: z.string()
@@ -36,10 +37,11 @@ interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
+  bundles?: CartBundle[];
   onSuccess?: () => void;
 }
 
-export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutModalProps) {
+export function CheckoutModal({ isOpen, onClose, items, bundles = [], onSuccess }: CheckoutModalProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const leadIdRef = useRef<string | null>(null);
@@ -54,7 +56,9 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
     },
   });
 
-  const total = items.reduce((sum, item) => sum + item.product_prix * item.quantite, 0);
+  const itemsTotal = items.reduce((sum, item) => sum + item.product_prix * item.quantite, 0);
+  const bundleTotal = bundles.reduce((sum, bundle) => sum + bundle.bundle_total * bundle.primary_item.quantite, 0);
+  const total = itemsTotal + bundleTotal;
 
   // Create or update lead when form data changes
   const updateLead = async (data: Partial<CheckoutForm>) => {
@@ -68,7 +72,7 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
         phone: data.phone || null,
         ville: data.ville || null,
         adresse: data.adresse || null,
-        cart_items: items as any,
+        cart_items: { items, bundles } as any,
         total_value: total,
         form_completion_percentage: formCompletionPercentage,
         last_activity: new Date().toISOString(),
@@ -109,7 +113,7 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
     });
 
     return () => subscription.unsubscribe();
-  }, [isOpen, items, total]);
+  }, [isOpen, items, bundles, total]);
 
   // Reset lead ref when modal closes
   useEffect(() => {
@@ -168,14 +172,56 @@ export function CheckoutModal({ isOpen, onClose, items, onSuccess }: CheckoutMod
 
         <div className="mb-4">
           <h4 className="font-semibold mb-2">Récapitulatif</h4>
+          
+          {/* Regular Items */}
           {items.map((item) => (
-            <div key={item.product_id} className="flex justify-between text-sm mb-1">
-              <span>{item.product_nom} x{item.quantite}</span>
+            <div key={`${item.product_id}-${JSON.stringify(item.variables || {})}`} className="flex justify-between text-sm mb-1">
+              <span>
+                {item.product_nom} x{item.quantite}
+                {item.variables && (item.variables.color || item.variables.size) && (
+                  <span className="text-muted-foreground text-xs ml-1">
+                    ({[item.variables.color, item.variables.size].filter(Boolean).join(', ')})
+                  </span>
+                )}
+              </span>
               <span>{formatPrice(item.product_prix * item.quantite)}</span>
             </div>
           ))}
-          <div className="border-t pt-2 mt-2 font-semibold">
-            Total: {formatPrice(total)}
+
+          {/* Bundle Items */}
+          {bundles.map((bundle) => (
+            <div key={bundle.bundle_id} className="mb-2 p-2 bg-primary/5 rounded border-l-2 border-primary/20">
+              <div className="flex justify-between text-sm font-medium text-primary mb-1">
+                <span>{bundle.bundle_name} x{bundle.primary_item.quantite}</span>
+                <span>{formatPrice(bundle.bundle_total * bundle.primary_item.quantite)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground ml-2 space-y-1">
+                <div>• {bundle.primary_item.product_nom}</div>
+                <div>• {bundle.secondary_item.product_nom} (réduit)</div>
+                <div className="text-destructive">
+                  Économie: {formatPrice(bundle.total_savings * bundle.primary_item.quantite)}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="border-t pt-2 mt-2 space-y-1">
+            {items.length > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Articles:</span>
+                <span>{formatPrice(itemsTotal)}</span>
+              </div>
+            )}
+            {bundles.length > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Packs:</span>
+                <span>{formatPrice(bundleTotal)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold">
+              <span>Total:</span>
+              <span>{formatPrice(total)}</span>
+            </div>
           </div>
         </div>
 
