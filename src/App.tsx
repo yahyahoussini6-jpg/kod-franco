@@ -42,7 +42,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 
 const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
-const AdminBundleOffers = React.lazy(() => import("./pages/admin/BundleOffers"));
+import AdminBundleOffers from "./pages/admin/BundleOffers";
 import AdminBlog from "./pages/admin/Blog";
 import BlogNew from "./pages/admin/BlogNew";
 import SEOManagement from "./pages/admin/SEOManagement";
