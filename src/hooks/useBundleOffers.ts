@@ -1,103 +1,89 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { BundleOffer } from '@/types/bundle';
 
-// Mock data for demonstration - in a real app, this would come from your API
-const mockBundleOffers: BundleOffer[] = [
-  {
-    id: 'bundle-1',
-    name: 'Pack Style Complet',
-    description: 'Achetez votre article principal et obtenez le second à prix réduit !',
-    discount_percentage: 30,
-    is_active: true,
-    primary_product: {
-      product_id: 'prod-1',
-      product_nom: 'T-shirt Premium',
-      product_prix: 299,
-      bundle_prix: 299, // Same price for primary
-      media: ['/placeholder.svg'],
-      en_stock: true,
-      available_variants: {
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['Noir', 'Blanc', 'Rouge', 'Bleu']
-      }
-    },
-    secondary_product: {
-      product_id: 'prod-2',
-      product_nom: 'Casquette Tendance',
-      product_prix: 149,
-      bundle_prix: 99, // Discounted price
-      media: ['/placeholder.svg'],
-      en_stock: true,
-      available_variants: {
-        colors: ['Noir', 'Blanc', 'Rouge']
-      }
-    }
-  },
-  {
-    id: 'bundle-2',
-    name: 'Duo Confort',
-    description: 'Le parfait combo pour votre garde-robe !',
-    discount_percentage: 25,
-    is_active: true,
-    primary_product: {
-      product_id: 'prod-3',
-      product_nom: 'Jean Slim',
-      product_prix: 499,
-      bundle_prix: 499,
-      media: ['/placeholder.svg'],
-      en_stock: true,
-      available_variants: {
-        sizes: ['28', '30', '32', '34', '36']
-      }
-    },
-    secondary_product: {
-      product_id: 'prod-4',
-      product_nom: 'Ceinture Cuir',
-      product_prix: 199,
-      bundle_prix: 149,
-      media: ['/placeholder.svg'],
-      en_stock: true,
-      available_variants: {
-        colors: ['Noir', 'Marron']
-      }
-    }
-  }
-];
+export function useBundleOffers(productId?: string) {
+  const { data: offers = [], isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['bundle-offers', productId],
+    queryFn: async () => {
+      let query = supabase
+        .from('bundle_offers')
+        .select(`
+          *,
+          bundle_items (
+            id,
+            product_id,
+            is_primary,
+            original_price,
+            bundle_price,
+            discount_percentage,
+            min_quantity,
+            max_quantity,
+            display_order,
+            products (
+              id,
+              nom,
+              prix,
+              media,
+              en_stock,
+              variables
+            )
+          )
+        `)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
 
-export function useBundleOffers() {
-  const [offers, setOffers] = useState<BundleOffer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+      // Filter by date if applicable
+      const now = new Date().toISOString().split('T')[0];
+      query = query.or(`start_date.is.null,start_date.lte.${now}`)
+                 .or(`end_date.is.null,end_date.gte.${now}`);
 
-  useEffect(() => {
-    // Simulate API call
-    const fetchOffers = async () => {
-      try {
-        setLoading(true);
-        // In a real app, you would fetch from your API here
-        // const response = await fetch('/api/bundle-offers');
-        // const data = await response.json();
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      // Transform data to match the expected BundleOffer format
+      return data.map(bundle => {
+        const primaryItem = bundle.bundle_items?.find(item => item.is_primary);
+        const secondaryItems = bundle.bundle_items?.filter(item => !item.is_primary) || [];
         
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setOffers(mockBundleOffers.filter(offer => offer.is_active));
-        setError(null);
-      } catch (err) {
-        setError('Failed to load bundle offers');
-        console.error('Error fetching bundle offers:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+        // For backwards compatibility, create primary/secondary structure
+        const transformedBundle: BundleOffer = {
+          id: bundle.id,
+          name: bundle.name,
+          description: bundle.description || '',
+          discount_percentage: primaryItem ? primaryItem.discount_percentage : 0,
+          is_active: bundle.is_active,
+          primary_product: primaryItem ? {
+            product_id: primaryItem.products.id,
+            product_nom: primaryItem.products.nom,
+            product_prix: primaryItem.original_price,
+            bundle_prix: primaryItem.bundle_price,
+            media: Array.isArray(primaryItem.products.media) ? primaryItem.products.media : [],
+            en_stock: primaryItem.products.en_stock,
+            available_variants: typeof primaryItem.products.variables === 'object' && primaryItem.products.variables ? primaryItem.products.variables as any : {}
+          } : null,
+          secondary_product: secondaryItems[0] ? {
+            product_id: secondaryItems[0].products.id,
+            product_nom: secondaryItems[0].products.nom,
+            product_prix: secondaryItems[0].original_price,
+            bundle_prix: secondaryItems[0].bundle_price,
+            media: Array.isArray(secondaryItems[0].products.media) ? secondaryItems[0].products.media : [],
+            en_stock: secondaryItems[0].products.en_stock,
+            available_variants: typeof secondaryItems[0].products.variables === 'object' && secondaryItems[0].products.variables ? secondaryItems[0].products.variables as any : {}
+          } : null
+        };
 
-    fetchOffers();
-  }, []);
+        return transformedBundle;
+      }).filter(bundle => bundle.primary_product); // Only return bundles with at least a primary product
+    }
+  });
 
-  const getBundlesByProduct = (productId: string): BundleOffer[] => {
+  const getBundlesByProduct = (targetProductId: string): BundleOffer[] => {
     return offers.filter(offer => 
-      offer.primary_product.product_id === productId || 
-      offer.secondary_product.product_id === productId
+      offer.primary_product?.product_id === targetProductId || 
+      offer.secondary_product?.product_id === targetProductId
     );
   };
 
@@ -105,15 +91,15 @@ export function useBundleOffers() {
     return offers.find(offer => offer.id === bundleId);
   };
 
+  // If productId is provided, filter offers for that product
+  const filteredOffers = productId ? getBundlesByProduct(productId) : offers;
+
   return {
-    offers,
+    offers: filteredOffers,
     loading,
-    error,
+    error: error?.message || null,
     getBundlesByProduct,
     getBundleById,
-    refetch: () => {
-      setLoading(true);
-      // Re-fetch logic here
-    }
+    refetch
   };
 }

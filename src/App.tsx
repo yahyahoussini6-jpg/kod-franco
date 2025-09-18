@@ -40,6 +40,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import BundleOffers from "./pages/BundleOffers";
 
 const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
 import AdminBundleOffers from "./pages/admin/BundleOffers";
@@ -93,6 +94,9 @@ function Navigation() {
             </Link>
             <Link to="/suivi-commande" className="text-muted-foreground hover:text-foreground transition-colors">
               Suivi commande
+            </Link>
+            <Link to="/offres-bundle" className="text-muted-foreground hover:text-foreground transition-colors">
+              Offres Pack
             </Link>
             <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
               Blog
@@ -172,6 +176,13 @@ function Navigation() {
                 Suivi commande
               </Link>
               <Link 
+                to="/offres-bundle" 
+                className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Offres Pack
+              </Link>
+              <Link 
                 to="/blog" 
                 className="text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -244,6 +255,7 @@ const App = () => (
                   <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="/offres-bundle" element={<BundleOffers />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />

@@ -10,7 +10,7 @@ interface BundleOffersSectionProps {
 }
 
 export function BundleOffersSection({ productId, className }: BundleOffersSectionProps) {
-  const { offers, loading, error } = useBundleOffers();
+  const { offers, loading, error } = useBundleOffers(productId);
 
   if (loading) {
     return (
@@ -32,24 +32,14 @@ export function BundleOffersSection({ productId, className }: BundleOffersSectio
     return null;
   }
 
-  // Filter offers by product if productId is provided
-  const filteredOffers = productId 
-    ? offers.filter(offer => 
-        offer.primary_product.product_id === productId || 
-        offer.secondary_product.product_id === productId
-      )
-    : offers;
-
-  if (filteredOffers.length === 0) {
-    return null;
-  }
-
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Offres Spéciales Pack</h2>
+          <h2 className="text-2xl font-bold">
+            {productId ? 'Offres spéciales avec ce produit' : 'Offres Spéciales Pack'}
+          </h2>
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <p className="text-muted-foreground">
@@ -58,7 +48,7 @@ export function BundleOffersSection({ productId, className }: BundleOffersSectio
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredOffers.map((offer) => (
+        {offers.map((offer) => (
           <BundleOfferCard
             key={offer.id}
             bundle={offer}
