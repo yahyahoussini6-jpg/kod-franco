@@ -47,6 +47,7 @@ const navigation = [
     items: [
       { name: 'Blog', href: '/admin/blog', icon: Database },
       { name: 'SEO Management', href: '/admin/seo', icon: TestTube },
+      { name: 'Offres Bundle', href: '/admin/bundle-offers', icon: Package },
       { name: 'Avis Clients', href: '/admin/reviews', icon: MessageSquare },
     ]
   },

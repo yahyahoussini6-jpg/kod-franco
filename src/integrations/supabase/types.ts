@@ -235,6 +235,102 @@ export type Database = {
         }
         Relationships: []
       }
+      bundle_items: {
+        Row: {
+          bundle_id: string
+          bundle_price: number
+          created_at: string
+          discount_percentage: number
+          display_order: number
+          id: string
+          is_primary: boolean
+          max_quantity: number | null
+          min_quantity: number
+          original_price: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          bundle_id: string
+          bundle_price?: number
+          created_at?: string
+          discount_percentage?: number
+          display_order?: number
+          id?: string
+          is_primary?: boolean
+          max_quantity?: number | null
+          min_quantity?: number
+          original_price?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          bundle_id?: string
+          bundle_price?: number
+          created_at?: string
+          discount_percentage?: number
+          display_order?: number
+          id?: string
+          is_primary?: boolean
+          max_quantity?: number | null
+          min_quantity?: number
+          original_price?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundle_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundle_offers: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          end_date: string | null
+          id: string
+          is_active: boolean
+          name: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       carriers: {
         Row: {
           code: string
