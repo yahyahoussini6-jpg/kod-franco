@@ -60,10 +60,10 @@ const navigation = [
   }
 ];
 
-function NavigationItem({ item, isActive }: { item: any; isActive: boolean }) {
+function NavigationItem({ item, isActive, location }: { item: any; isActive: boolean; location: any }) {
   if (item.type === 'section') {
     const [isExpanded, setIsExpanded] = React.useState(
-      item.items?.some((subItem: any) => window.location.pathname.startsWith(subItem.href))
+      item.items?.some((subItem: any) => location.pathname.startsWith(subItem.href))
     );
 
     return (
@@ -207,7 +207,7 @@ export default function AdminLayout() {
                   : location.pathname.startsWith(item.href);
                 
                 return (
-                  <NavigationItem key={item.name} item={item} isActive={isActive} />
+                  <NavigationItem key={item.name} item={item} isActive={isActive} location={location} />
                 );
               })}
             </ul>
