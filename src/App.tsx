@@ -258,7 +258,6 @@ const App = () => (
                   <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/offres-bundle" element={<BundleOffers />} />
           <Route path="/bundle/:id" element={<BundleDetail />} />
-          <Route path="/bundle/:id" element={<BundleDetail />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
