@@ -43,7 +43,7 @@ import BlogPost from "./pages/BlogPost";
 import BundleOffers from "./pages/BundleOffers";
 import BundleDetail from "./pages/BundleDetail";
 
-const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
+import AdminReviews from "./pages/admin/Reviews";
 import AdminBundleOffers from "./pages/admin/BundleOffers";
 import AdminBlog from "./pages/admin/Blog";
 import BlogNew from "./pages/admin/BlogNew";

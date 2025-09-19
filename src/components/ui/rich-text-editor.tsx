@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 
 // Dynamic import for ReactQuill to avoid SSR issues
