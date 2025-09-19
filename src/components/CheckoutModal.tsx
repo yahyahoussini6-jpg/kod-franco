@@ -124,9 +124,32 @@ export function CheckoutModal({ isOpen, onClose, items, bundles = [], onSuccess 
 
   const onSubmit = async (data: CheckoutForm) => {
     try {
+      // Convert bundles to regular order items
+      const bundleItems: CartItem[] = bundles.flatMap(bundle => [
+        {
+          product_id: bundle.primary_item.product_id,
+          product_nom: `${bundle.bundle_name} - ${bundle.primary_item.product_nom}`,
+          product_prix: bundle.primary_item.product_prix,
+          quantite: bundle.primary_item.quantite,
+          variables: bundle.primary_item.variables,
+          media: bundle.primary_item.media
+        },
+        {
+          product_id: bundle.secondary_item.product_id,
+          product_nom: `${bundle.bundle_name} - ${bundle.secondary_item.product_nom} (Bonus)`,
+          product_prix: bundle.secondary_item.bundle_prix, // Use discounted price
+          quantite: bundle.secondary_item.quantite,
+          variables: bundle.secondary_item.variables,
+          media: bundle.secondary_item.media
+        }
+      ]);
+
+      // Combine regular items with bundle items
+      const allItems = [...items, ...bundleItems];
+
       const { data: result, error } = await supabase.rpc('place_order', {
         p_client: data as any,
-        p_items: items as any,
+        p_items: allItems as any,
       });
 
       if (error) throw error;
