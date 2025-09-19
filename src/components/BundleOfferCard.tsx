@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, ShoppingCart, Tag, Gift } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, ShoppingCart, Tag, Gift, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface BundleOfferCardProps {
 
 export function BundleOfferCard({ bundle, className }: BundleOfferCardProps) {
   const { addBundle } = useCart();
+  const navigate = useNavigate();
   const [primaryVariants, setPrimaryVariants] = useState<ProductVariant>({});
   const [secondaryVariants, setSecondaryVariants] = useState<ProductVariant>({});
   const [quantity, setQuantity] = useState(1);
@@ -275,15 +277,25 @@ export function BundleOfferCard({ bundle, className }: BundleOfferCardProps) {
           </div>
         </div>
 
-        {/* Add to Cart Button */}
-        <Button 
-          onClick={handleAddToCart}
-          className="w-full h-11 text-base font-semibold"
-          disabled={!bundle.primary_product.en_stock || !bundle.secondary_product.en_stock}
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Ajouter le pack au panier
-        </Button>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => navigate(`/bundle/${bundle.id}`)}
+            className="h-11 text-sm font-semibold"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Voir détails
+          </Button>
+          <Button 
+            onClick={handleAddToCart}
+            className="h-11 text-sm font-semibold"
+            disabled={!bundle.primary_product.en_stock || !bundle.secondary_product.en_stock}
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Ajouter
+          </Button>
+        </div>
 
         <p className="text-xs text-center text-muted-foreground">
           Paiement à la livraison (COD) disponible

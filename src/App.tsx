@@ -41,6 +41,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import BundleOffers from "./pages/BundleOffers";
+import BundleDetail from "./pages/BundleDetail";
 
 const AdminReviews = React.lazy(() => import("./pages/admin/Reviews"));
 import AdminBundleOffers from "./pages/admin/BundleOffers";
@@ -255,7 +256,9 @@ const App = () => (
                   <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
-                  <Route path="/offres-bundle" element={<BundleOffers />} />
+          <Route path="/offres-bundle" element={<BundleOffers />} />
+          <Route path="/bundle/:id" element={<BundleDetail />} />
+          <Route path="/bundle/:id" element={<BundleDetail />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminAnalytics />} />
