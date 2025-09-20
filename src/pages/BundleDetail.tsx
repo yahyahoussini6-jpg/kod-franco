@@ -47,6 +47,7 @@ export default function BundleDetail() {
     related: false
   });
   
+  // Fetch bundle data and customizations
   const { data: bundle, isLoading, error } = useQuery({
     queryKey: ['bundle', id],
     queryFn: async () => {
@@ -74,6 +75,19 @@ export default function BundleDetail() {
               description,
               slug
             )
+          ),
+          bundle_customizations (
+            layout_type,
+            theme,
+            animations_enabled,
+            shadows_enabled,
+            gradients_enabled,
+            spacing,
+            border_radius,
+            visible_sections,
+            custom_css,
+            custom_hero_text,
+            custom_benefits
           )
         `)
         .eq('id', id)
@@ -89,12 +103,28 @@ export default function BundleDetail() {
       
       if (!primaryItem || secondaryItems.length === 0) return null;
 
+      // Apply customizations if available
+      const customization = data.bundle_customizations?.[0];
+      if (customization) {
+        setGalleryLayout(customization.layout_type);
+        setPageStyles({
+          theme: customization.theme,
+          animations: customization.animations_enabled,
+          shadows: customization.shadows_enabled,
+          gradients: customization.gradients_enabled,
+          spacing: customization.spacing,
+          borderRadius: customization.border_radius
+        });
+        setVisibleSections(customization.visible_sections);
+      }
+
       return {
         id: data.id,
         name: data.name,
         description: data.description || '',
         discount_percentage: primaryItem.discount_percentage,
         is_active: data.is_active,
+        customization,
         primary_product: {
           product_id: primaryItem.products.id,
           product_nom: primaryItem.products.nom,

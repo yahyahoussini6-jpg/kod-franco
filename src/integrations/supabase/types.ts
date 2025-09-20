@@ -235,6 +235,68 @@ export type Database = {
         }
         Relationships: []
       }
+      bundle_customizations: {
+        Row: {
+          animations_enabled: boolean
+          border_radius: number
+          bundle_id: string
+          created_at: string
+          custom_benefits: Json | null
+          custom_css: string | null
+          custom_hero_text: string | null
+          gradients_enabled: boolean
+          id: string
+          layout_type: string
+          shadows_enabled: boolean
+          spacing: number
+          theme: string
+          updated_at: string
+          visible_sections: Json
+        }
+        Insert: {
+          animations_enabled?: boolean
+          border_radius?: number
+          bundle_id: string
+          created_at?: string
+          custom_benefits?: Json | null
+          custom_css?: string | null
+          custom_hero_text?: string | null
+          gradients_enabled?: boolean
+          id?: string
+          layout_type?: string
+          shadows_enabled?: boolean
+          spacing?: number
+          theme?: string
+          updated_at?: string
+          visible_sections?: Json
+        }
+        Update: {
+          animations_enabled?: boolean
+          border_radius?: number
+          bundle_id?: string
+          created_at?: string
+          custom_benefits?: Json | null
+          custom_css?: string | null
+          custom_hero_text?: string | null
+          gradients_enabled?: boolean
+          id?: string
+          layout_type?: string
+          shadows_enabled?: boolean
+          spacing?: number
+          theme?: string
+          updated_at?: string
+          visible_sections?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_customizations_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: true
+            referencedRelation: "bundle_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bundle_items: {
         Row: {
           bundle_id: string
