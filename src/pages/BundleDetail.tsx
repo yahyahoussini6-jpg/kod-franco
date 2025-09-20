@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingCart, MessageCircle, Gift, Plus, Tag, Palette, Ruler } from 'lucide-react';
+import { ShoppingCart, MessageCircle, Gift, Plus, Tag, Palette, Ruler, Star, Shield, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,8 @@ import { formatPrice } from '@/lib/format';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProductVariant, CartBundle } from '@/types/bundle';
+import { BundleGallery } from '@/components/BundleGallery';
+import { BundleCustomizer } from '@/components/BundleCustomizer';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '212612345678';
 
@@ -26,6 +28,24 @@ export default function BundleDetail() {
   const [quantity, setQuantity] = useState(1);
   const [currentPrimaryImageIndex, setCurrentPrimaryImageIndex] = useState(0);
   const [currentSecondaryImageIndex, setCurrentSecondaryImageIndex] = useState(0);
+  const [galleryLayout, setGalleryLayout] = useState<'stacked' | 'grid' | 'carousel'>('stacked');
+  const [pageStyles, setPageStyles] = useState({
+    theme: 'default',
+    animations: true,
+    shadows: true,
+    gradients: true,
+    spacing: 6,
+    borderRadius: 12
+  });
+  const [visibleSections, setVisibleSections] = useState({
+    gallery: true,
+    pricing: true,
+    variants: true,
+    description: true,
+    benefits: true,
+    reviews: false,
+    related: false
+  });
   
   const { data: bundle, isLoading, error } = useQuery({
     queryKey: ['bundle', id],
@@ -236,116 +256,18 @@ export default function BundleDetail() {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16">
           
-          {/* Left Column - Bundle Images */}
+          {/* Left Column - Enhanced Gallery */}
           <div className="order-1">
-            <div className="space-y-6 sticky top-4">
-              {/* Bundle Badge */}
-              <div className="flex items-center justify-center mb-4">
-                <div className="bg-gradient-to-r from-primary/10 to-primary/20 text-primary px-6 py-3 rounded-full text-lg font-bold border border-primary/30">
-                  <Gift className="inline mr-2 h-5 w-5" />
-                  Pack Spécial {bundle.discount_percentage}% OFF
-                </div>
-              </div>
-
-              {/* Primary Product Images */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <span className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
-                  {bundle.primary_product.product_nom}
-                </h3>
-                
-                {primaryImages.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br from-muted/50 to-muted shadow-lg border">
-                      <img
-                        src={(primaryImages[currentPrimaryImageIndex] as any)?.url}
-                        alt={bundle.primary_product.product_nom}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    
-                    {primaryImages.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {primaryImages.map((image, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentPrimaryImageIndex(index)}
-                            className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${
-                              currentPrimaryImageIndex === index 
-                                ? 'border-primary ring-2 ring-primary/20' 
-                                : 'border-muted hover:border-primary/50'
-                            }`}
-                          >
-                            <img
-                              src={(image as any).url}
-                              alt={`${bundle.primary_product.product_nom} ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="aspect-square w-full flex items-center justify-center bg-muted rounded-xl">
-                    <span className="text-muted-foreground">Aucune image</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Plus Icon */}
-              <div className="flex justify-center">
-                <div className="bg-primary/20 rounded-full p-4 border-2 border-primary/30">
-                  <Plus className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-
-              {/* Secondary Product Images */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <span className="bg-secondary text-secondary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-                  {bundle.secondary_product.product_nom}
-                  <Badge variant="destructive" className="ml-2">BONUS</Badge>
-                </h3>
-                
-                {secondaryImages.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br from-muted/50 to-muted shadow-lg border">
-                      <img
-                        src={(secondaryImages[currentSecondaryImageIndex] as any)?.url}
-                        alt={bundle.secondary_product.product_nom}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    
-                    {secondaryImages.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {secondaryImages.map((image, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentSecondaryImageIndex(index)}
-                            className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${
-                              currentSecondaryImageIndex === index 
-                                ? 'border-primary ring-2 ring-primary/20' 
-                                : 'border-muted hover:border-primary/50'
-                            }`}
-                          >
-                            <img
-                              src={(image as any).url}
-                              alt={`${bundle.secondary_product.product_nom} ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="aspect-square w-full flex items-center justify-center bg-muted rounded-xl">
-                    <span className="text-muted-foreground">Aucune image</span>
-                  </div>
-                )}
-              </div>
+            <div className={`space-y-${pageStyles.spacing} sticky top-4`}>
+              {visibleSections.gallery && (
+                <BundleGallery
+                  primaryImages={primaryImages}
+                  secondaryImages={secondaryImages}
+                  primaryProductName={bundle.primary_product.product_nom}
+                  secondaryProductName={bundle.secondary_product.product_nom}
+                  bundleName={bundle.name}
+                />
+              )}
             </div>
           </div>
 
@@ -581,19 +503,20 @@ export default function BundleDetail() {
         </div>
       </div>
 
-      {showCheckout && (
-        <CheckoutModal
-          isOpen={showCheckout}
-          onClose={() => setShowCheckout(false)}
-          items={[{
-            product_id: bundle.primary_product.product_id,
-            product_nom: bundle.primary_product.product_nom,
-            product_prix: bundle.primary_product.bundle_prix,
-            quantite: quantity,
-            variables: primaryVariants
-          }]}
-        />
-      )}
+      {/* Page Customizer */}
+      <BundleCustomizer
+        onLayoutChange={setGalleryLayout}
+        onStyleChange={setPageStyles}
+        onSectionToggle={(section, visible) => 
+          setVisibleSections(prev => ({ ...prev, [section]: visible }))
+        }
+      />
+
+      <CheckoutModal 
+        isOpen={showCheckout} 
+        onClose={() => setShowCheckout(false)}
+        items={[]}
+      />
     </>
   );
 }
