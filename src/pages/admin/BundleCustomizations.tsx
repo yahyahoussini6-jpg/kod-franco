@@ -85,19 +85,52 @@ export default function BundleCustomizations() {
       
       if (error) throw error;
       
-      return data.map(bundle => ({
-        ...bundle.bundle_customizations?.[0],
-        bundle_id: bundle.id,
-        bundle_name: bundle.name,
-        is_active: bundle.is_active
-      })).filter(Boolean);
+      return data.map(bundle => {
+        const customization = bundle.bundle_customizations?.[0];
+        if (!customization) {
+          // Return a default customization object if none exists
+          return {
+            bundle_id: bundle.id,
+            bundle_name: bundle.name,
+            is_active: bundle.is_active,
+            layout_type: 'stacked' as const,
+            theme: 'default' as const,
+            animations_enabled: true,
+            shadows_enabled: true,
+            gradients_enabled: true,
+            spacing: 6,
+            border_radius: 12,
+            visible_sections: {
+              gallery: true,
+              pricing: true,
+              variants: true,
+              description: true,
+              benefits: true,
+              reviews: false,
+              related: false
+            },
+            custom_css: null,
+            custom_hero_text: null,
+            custom_benefits: []
+          };
+        }
+        
+        return {
+          ...customization,
+          bundle_id: bundle.id,
+          bundle_name: bundle.name,
+          is_active: bundle.is_active
+        };
+      }).filter(Boolean);
     }
   });
 
   // Update customization mutation
   const updateCustomization = useMutation({
     mutationFn: async (customization: Partial<BundleCustomization>) => {
-      const updateData: any = {
+      console.log('Updating customization:', customization);
+      
+      const updateData = {
         bundle_id: customization.bundle_id,
         layout_type: customization.layout_type,
         theme: customization.theme,
@@ -112,16 +145,28 @@ export default function BundleCustomizations() {
         custom_benefits: customization.custom_benefits
       };
 
-      // Include ID if updating existing customization
+      let data, error;
+      
       if (customization.id) {
-        updateData.id = customization.id;
+        // Update existing customization
+        const result = await supabase
+          .from('bundle_customizations')
+          .update(updateData)
+          .eq('id', customization.id)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      } else {
+        // Insert new customization
+        const result = await supabase
+          .from('bundle_customizations')
+          .insert(updateData)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
       }
-
-      const { data, error } = await supabase
-        .from('bundle_customizations')
-        .upsert(updateData)
-        .select()
-        .single();
       
       if (error) throw error;
       return data;
