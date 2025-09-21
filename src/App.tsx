@@ -275,6 +275,7 @@ const App = () => (
                     <Route path="blog/new" element={<BlogNew />} />
                     <Route path="seo" element={<SEOManagement />} />
                     <Route path="bundle-customizations" element={<AdminBundleCustomizations />} />
+                    <Route path="bundle-offers" element={<AdminBundleOffers />} />
                     <Route path="reviews" element={<AdminReviews />} />
                     <Route path="system" element={<SystemPage />} />
                     <Route path="whatsapp" element={<WhatsAppSettings />} />
