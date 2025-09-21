@@ -392,7 +392,7 @@ export default function BundleCustomizations() {
                 <CardTitle>Visibilité des sections</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(currentCustomization.visible_sections).map(([section, visible]) => (
+                {Object.entries(currentCustomization.visible_sections || {}).map(([section, visible]) => (
                   <div key={section} className="flex items-center justify-between">
                     <Label className="capitalize">
                       {section === 'gallery' ? 'Galerie' :
