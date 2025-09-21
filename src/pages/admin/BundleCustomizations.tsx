@@ -97,22 +97,29 @@ export default function BundleCustomizations() {
   // Update customization mutation
   const updateCustomization = useMutation({
     mutationFn: async (customization: Partial<BundleCustomization>) => {
+      const updateData: any = {
+        bundle_id: customization.bundle_id,
+        layout_type: customization.layout_type,
+        theme: customization.theme,
+        animations_enabled: customization.animations_enabled,
+        shadows_enabled: customization.shadows_enabled,
+        gradients_enabled: customization.gradients_enabled,
+        spacing: customization.spacing,
+        border_radius: customization.border_radius,
+        visible_sections: customization.visible_sections,
+        custom_css: customization.custom_css,
+        custom_hero_text: customization.custom_hero_text,
+        custom_benefits: customization.custom_benefits
+      };
+
+      // Include ID if updating existing customization
+      if (customization.id) {
+        updateData.id = customization.id;
+      }
+
       const { data, error } = await supabase
         .from('bundle_customizations')
-        .upsert({
-          bundle_id: customization.bundle_id,
-          layout_type: customization.layout_type,
-          theme: customization.theme,
-          animations_enabled: customization.animations_enabled,
-          shadows_enabled: customization.shadows_enabled,
-          gradients_enabled: customization.gradients_enabled,
-          spacing: customization.spacing,
-          border_radius: customization.border_radius,
-          visible_sections: customization.visible_sections,
-          custom_css: customization.custom_css,
-          custom_hero_text: customization.custom_hero_text,
-          custom_benefits: customization.custom_benefits
-        })
+        .upsert(updateData)
         .select()
         .single();
       
