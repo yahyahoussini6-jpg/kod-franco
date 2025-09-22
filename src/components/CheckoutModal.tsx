@@ -155,7 +155,7 @@ export function CheckoutModal({ isOpen, onClose, items, bundles = [], onSuccess 
       if (error) throw error;
 
       if (result && result.length > 0) {
-        const { code_suivi } = result[0];
+        const { code_suivi, order_id } = result[0];
         
         // Mark lead as converted if it exists
         if (leadIdRef.current) {
@@ -163,9 +163,20 @@ export function CheckoutModal({ isOpen, onClose, items, bundles = [], onSuccess 
             .from('leads')
             .update({ 
               status: 'converted',
-              converted_to_order_id: result[0].order_id 
+              converted_to_order_id: order_id 
             })
             .eq('id', leadIdRef.current);
+        }
+
+        // Send tracking code via WhatsApp
+        try {
+          await supabase.functions.invoke('send-tracking-notification', {
+            body: { order_id }
+          });
+          console.log('WhatsApp tracking notification sent');
+        } catch (error) {
+          console.error('Failed to send WhatsApp notification:', error);
+          // Don't block the order creation if WhatsApp fails
         }
 
         toast({
