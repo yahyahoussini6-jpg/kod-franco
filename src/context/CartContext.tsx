@@ -147,6 +147,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const grandTotal = total + bundleTotal;
   const totalSavings = bundles.reduce((sum, bundle) => sum + bundle.total_savings * bundle.primary_item.quantite, 0);
 
+  // Debug logging
+  console.log('Cart Debug:', { items, total, bundleTotal, grandTotal });
+
   return (
     <CartContext.Provider
       value={{
