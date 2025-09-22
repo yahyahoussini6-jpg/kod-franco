@@ -318,119 +318,119 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Enhanced Product Options */}
-            {(colors.length > 0 || sizes.length > 0) && (
-              <div className="space-y-6 p-6 bg-gradient-to-br from-card to-card/80 rounded-xl border-2 border-primary/10 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Palette className="h-4 w-4 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold">Personnalisez votre produit</h3>
-                </div>
-                
-                {colors.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-base font-medium">Couleur disponible</Label>
-                      {selectedColor && (
-                        <Badge variant="outline" className="text-xs">
-                          Sélectionné: {selectedColor}
-                        </Badge>
-                      )}
+            {/* Unified Product Customization & Actions Container */}
+            <div className="space-y-6 p-6 bg-gradient-to-br from-card to-card/80 rounded-xl border-2 border-primary/10 shadow-lg">
+              {/* Product Customization Section */}
+              {(colors.length > 0 || sizes.length > 0) && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Palette className="h-4 w-4 text-primary" />
                     </div>
-                    <RadioGroup value={selectedColor} onValueChange={setSelectedColor}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {colors.map((color: string) => (
-                          <div key={color} className="flex items-center space-x-2">
-                            <RadioGroupItem value={color} id={`color-${color}`} />
-                            <Label htmlFor={`color-${color}`} className="cursor-pointer flex-1">
-                              <div className={`p-3 rounded-lg border-2 transition-all text-center ${
-                                selectedColor === color 
-                                  ? 'border-primary bg-primary/10 shadow-md' 
-                                  : 'border-muted hover:border-primary/50 hover:bg-muted/50'
-                              }`}>
-                                <span className="text-sm font-medium">{color}</span>
-                              </div>
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </RadioGroup>
+                    <h3 className="text-xl font-semibold">Personnalisez votre produit</h3>
                   </div>
-                )}
-
-                {sizes.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Ruler className="h-5 w-5 text-primary" />
-                      <Label className="text-base font-medium">Taille disponible</Label>
-                      {selectedSize && (
-                        <Badge variant="outline" className="text-xs">
-                          Sélectionné: {selectedSize}
-                        </Badge>
-                      )}
+                  
+                  {colors.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-base font-medium">Couleur disponible</Label>
+                        {selectedColor && (
+                          <Badge variant="outline" className="text-xs">
+                            Sélectionné: {selectedColor}
+                          </Badge>
+                        )}
+                      </div>
+                      <RadioGroup value={selectedColor} onValueChange={setSelectedColor}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {colors.map((color: string) => (
+                            <div key={color} className="flex items-center space-x-2">
+                              <RadioGroupItem value={color} id={`color-${color}`} />
+                              <Label htmlFor={`color-${color}`} className="cursor-pointer flex-1">
+                                <div className={`p-3 rounded-lg border-2 transition-all text-center ${
+                                  selectedColor === color 
+                                    ? 'border-primary bg-primary/10 shadow-md' 
+                                    : 'border-muted hover:border-primary/50 hover:bg-muted/50'
+                                }`}>
+                                  <span className="text-sm font-medium">{color}</span>
+                                </div>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </RadioGroup>
                     </div>
-                    <RadioGroup value={selectedSize} onValueChange={setSelectedSize}>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {sizes.map((size: string) => (
-                          <div key={size} className="flex items-center space-x-2">
-                            <RadioGroupItem value={size} id={`size-${size}`} />
-                            <Label htmlFor={`size-${size}`} className="cursor-pointer flex-1">
-                              <div className={`p-3 rounded-lg border-2 transition-all text-center ${
-                                selectedSize === size 
-                                  ? 'border-primary bg-primary/10 shadow-md' 
-                                  : 'border-muted hover:border-primary/50 hover:bg-muted/50'
-                              }`}>
-                                <span className="text-sm font-medium">{size}</span>
-                              </div>
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </RadioGroup>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
 
-            {/* Enhanced Action Buttons */}
-            <div className="space-y-4 pt-6">
-              {/* Sticky CTA Container */}
-              <div className="bg-gradient-to-r from-card via-card/95 to-card rounded-xl p-4 sm:p-6 border-2 border-primary/20 shadow-xl">
+                  {sizes.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Ruler className="h-5 w-5 text-primary" />
+                        <Label className="text-base font-medium">Taille disponible</Label>
+                        {selectedSize && (
+                          <Badge variant="outline" className="text-xs">
+                            Sélectionné: {selectedSize}
+                          </Badge>
+                        )}
+                      </div>
+                      <RadioGroup value={selectedSize} onValueChange={setSelectedSize}>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {sizes.map((size: string) => (
+                            <div key={size} className="flex items-center space-x-2">
+                              <RadioGroupItem value={size} id={`size-${size}`} />
+                              <Label htmlFor={`size-${size}`} className="cursor-pointer flex-1">
+                                <div className={`p-3 rounded-lg border-2 transition-all text-center ${
+                                  selectedSize === size 
+                                    ? 'border-primary bg-primary/10 shadow-md' 
+                                    : 'border-muted hover:border-primary/50 hover:bg-muted/50'
+                                }`}>
+                                  <span className="text-sm font-medium">{size}</span>
+                                </div>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  )}
+                  
+                  {/* Divider */}
+                  <div className="border-t border-primary/20 my-6"></div>
+                </>
+              )}
+
+              {/* Action Buttons Section */}
+              <div className="space-y-4">
                 <Button
                   onClick={handleBuyNow}
                   size="lg"
                   className="w-full h-12 sm:h-16 text-lg sm:text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transform hover:scale-[1.02]"
                   disabled={!product.en_stock}
                 >
-                  <span className="hidden sm:inline">🚀 Acheter maintenant - Livraison 24h</span>
-                  <span className="sm:hidden">🚀 Acheter maintenant</span>
+                  🚀 Acheter maintenant - Livraison 24h
                 </Button>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Button
                     onClick={handleAddToCart}
                     variant="outline"
                     size="lg"
-                    className="h-10 sm:h-12 text-sm sm:text-base border-2 hover:bg-muted/50 font-semibold"
+                    className="h-12 text-base border-2 hover:bg-muted/50 font-semibold"
                     disabled={!product.en_stock}
                   >
-                    <ShoppingCart className="mr-1 sm:mr-2 h-4 sm:h-5 w-4 sm:w-5" />
-                    <span className="hidden sm:inline">Ajouter au panier</span>
-                    <span className="sm:hidden">Panier</span>
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    Ajouter au panier
                   </Button>
 
                   <Button
                     onClick={handleWhatsApp}
                     variant="secondary"
                     size="lg"
-                    className="h-10 sm:h-12 text-sm sm:text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 font-semibold"
+                    className="h-12 text-base bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 font-semibold"
                   >
-                    <MessageCircle className="mr-1 sm:mr-2 h-4 sm:h-5 w-4 sm:w-5" />
+                    <MessageCircle className="mr-2 h-5 w-5" />
                     WhatsApp
                   </Button>
                 </div>
-
               </div>
             </div>
 
