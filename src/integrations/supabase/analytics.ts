@@ -64,6 +64,47 @@ export interface MarketingMetrics {
   rto_rate: number;
 }
 
+export interface CLVMetrics {
+  total_customers: number;
+  avg_clv: number;
+  high_value_customers: number;
+  churn_risk_customers: number;
+  predicted_revenue_6m: number;
+  predicted_revenue_12m: number;
+}
+
+export interface ProfitMarginMetrics {
+  product_id: string;
+  product_name: string;
+  category: string;
+  units_sold: number;
+  gross_revenue: number;
+  cost_of_goods: number;
+  gross_profit: number;
+  profit_margin_pct: number;
+  avg_selling_price: number;
+}
+
+export interface SalesForecasting {
+  forecast_date: string;
+  period_type: string;
+  predicted_orders: number;
+  predicted_revenue: number;
+  confidence_level: number;
+  seasonal_factor: number;
+  trend_factor: number;
+}
+
+export interface SocialMetrics {
+  platform: string;
+  metric_date: string;
+  metric_type: string;
+  metric_value: number;
+  campaign_id?: string;
+  utm_source?: string;
+  utm_campaign?: string;
+}
+
 export interface DailyOverview {
   d: string;
   delivered_orders: number;
@@ -197,6 +238,62 @@ export class AnalyticsClient {
       ...order,
       days_in_transit: Math.floor((Date.now() - new Date(order.shipped_at).getTime()) / (24 * 60 * 60 * 1000))
     }));
+  }
+
+  async getCLV(from: Date, to: Date): Promise<CLVMetrics> {
+    const { data, error } = await supabase.rpc('rpc_analytics_clv', {
+      from_ts: from.toISOString(),
+      to_ts: to.toISOString()
+    });
+
+    if (error) throw error;
+    return data?.[0] || {
+      total_customers: 0,
+      avg_clv: 0,
+      high_value_customers: 0,
+      churn_risk_customers: 0,
+      predicted_revenue_6m: 0,
+      predicted_revenue_12m: 0
+    };
+  }
+
+  async getProfitMargins(from: Date, to: Date): Promise<ProfitMarginMetrics[]> {
+    const { data, error } = await supabase.rpc('rpc_analytics_profit_margins', {
+      from_ts: from.toISOString(),
+      to_ts: to.toISOString()
+    });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getSalesForecasts(from: Date, to: Date): Promise<SalesForecasting[]> {
+    const { data, error } = await supabase
+      .from('sales_forecasts')
+      .select('*')
+      .gte('forecast_date', from.toISOString().split('T')[0])
+      .lte('forecast_date', to.toISOString().split('T')[0])
+      .order('forecast_date');
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getSocialMetrics(from: Date, to: Date): Promise<SocialMetrics[]> {
+    const { data, error } = await supabase
+      .from('social_metrics')
+      .select('*')
+      .gte('metric_date', from.toISOString().split('T')[0])
+      .lte('metric_date', to.toISOString().split('T')[0])
+      .order('metric_date');
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async calculateCLV(): Promise<void> {
+    const { error } = await supabase.rpc('calculate_customer_clv');
+    if (error) throw error;
   }
 
   async getFilterOptions() {

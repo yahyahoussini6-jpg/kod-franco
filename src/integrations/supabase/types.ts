@@ -545,6 +545,60 @@ export type Database = {
           },
         ]
       }
+      customer_clv: {
+        Row: {
+          avg_order_value: number
+          churn_risk_score: number
+          created_at: string
+          current_clv: number
+          customer_id: string
+          first_order_date: string | null
+          id: string
+          last_order_date: string | null
+          phone: string
+          predicted_clv_12m: number
+          predicted_clv_6m: number
+          purchase_frequency: number
+          segments: string[] | null
+          total_orders: number
+          updated_at: string
+        }
+        Insert: {
+          avg_order_value?: number
+          churn_risk_score?: number
+          created_at?: string
+          current_clv?: number
+          customer_id: string
+          first_order_date?: string | null
+          id?: string
+          last_order_date?: string | null
+          phone: string
+          predicted_clv_12m?: number
+          predicted_clv_6m?: number
+          purchase_frequency?: number
+          segments?: string[] | null
+          total_orders?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_order_value?: number
+          churn_risk_score?: number
+          created_at?: string
+          current_clv?: number
+          customer_id?: string
+          first_order_date?: string | null
+          id?: string
+          last_order_date?: string | null
+          phone?: string
+          predicted_clv_12m?: number
+          predicted_clv_6m?: number
+          purchase_frequency?: number
+          segments?: string[] | null
+          total_orders?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_profiles: {
         Row: {
           acquisition_source: string | null
@@ -1032,6 +1086,7 @@ export type Database = {
           first_name: string | null
           id: string
           lang: string | null
+          marketing_cost: number | null
           order_total: number
           packed_at: string | null
           phone_e164: string | null
@@ -1043,7 +1098,10 @@ export type Database = {
           status: string | null
           total_mad: number | null
           utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
           utm_source: string | null
+          utm_term: string | null
           whatsapp_confirm_at: string | null
           whatsapp_confirm_sent: boolean | null
         }
@@ -1066,6 +1124,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           lang?: string | null
+          marketing_cost?: number | null
           order_total?: number
           packed_at?: string | null
           phone_e164?: string | null
@@ -1077,7 +1136,10 @@ export type Database = {
           status?: string | null
           total_mad?: number | null
           utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
+          utm_term?: string | null
           whatsapp_confirm_at?: string | null
           whatsapp_confirm_sent?: boolean | null
         }
@@ -1100,6 +1162,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           lang?: string | null
+          marketing_cost?: number | null
           order_total?: number
           packed_at?: string | null
           phone_e164?: string | null
@@ -1111,7 +1174,10 @@ export type Database = {
           status?: string | null
           total_mad?: number | null
           utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
+          utm_term?: string | null
           whatsapp_confirm_at?: string | null
           whatsapp_confirm_sent?: boolean | null
         }
@@ -1251,6 +1317,7 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          cost_price: number | null
           created_at: string
           description: string | null
           en_stock: boolean
@@ -1261,9 +1328,11 @@ export type Database = {
           prix: number
           slug: string
           variables: Json | null
+          weight_kg: number | null
         }
         Insert: {
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           en_stock?: boolean
@@ -1274,9 +1343,11 @@ export type Database = {
           prix: number
           slug: string
           variables?: Json | null
+          weight_kg?: number | null
         }
         Update: {
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           en_stock?: boolean
@@ -1287,6 +1358,7 @@ export type Database = {
           prix?: number
           slug?: string
           variables?: Json | null
+          weight_kg?: number | null
         }
         Relationships: [
           {
@@ -1452,6 +1524,51 @@ export type Database = {
           },
         ]
       }
+      sales_forecasts: {
+        Row: {
+          category_id: string | null
+          confidence_level: number
+          created_at: string
+          forecast_date: string
+          id: string
+          model_version: string | null
+          period_type: string
+          predicted_orders: number
+          predicted_revenue: number
+          product_id: string | null
+          seasonal_factor: number
+          trend_factor: number
+        }
+        Insert: {
+          category_id?: string | null
+          confidence_level?: number
+          created_at?: string
+          forecast_date: string
+          id?: string
+          model_version?: string | null
+          period_type: string
+          predicted_orders?: number
+          predicted_revenue?: number
+          product_id?: string | null
+          seasonal_factor?: number
+          trend_factor?: number
+        }
+        Update: {
+          category_id?: string | null
+          confidence_level?: number
+          created_at?: string
+          forecast_date?: string
+          id?: string
+          model_version?: string | null
+          period_type?: string
+          predicted_orders?: number
+          predicted_revenue?: number
+          product_id?: string | null
+          seasonal_factor?: number
+          trend_factor?: number
+        }
+        Relationships: []
+      }
       seo_pages: {
         Row: {
           canonical_url: string | null
@@ -1552,6 +1669,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_metrics: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          metric_date: string
+          metric_type: string
+          metric_value: number
+          platform: string
+          post_id: string | null
+          utm_campaign: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          metric_date: string
+          metric_type: string
+          metric_value?: number
+          platform: string
+          post_id?: string | null
+          utm_campaign?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          metric_date?: string
+          metric_type?: string
+          metric_value?: number
+          platform?: string
+          post_id?: string | null
+          utm_campaign?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
       }
       status_events: {
         Row: {
@@ -1758,6 +1914,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_customer_clv: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1851,6 +2011,17 @@ export type Database = {
           order_id: string
         }[]
       }
+      rpc_analytics_clv: {
+        Args: { from_ts: string; to_ts: string }
+        Returns: {
+          avg_clv: number
+          churn_risk_customers: number
+          high_value_customers: number
+          predicted_revenue_12m: number
+          predicted_revenue_6m: number
+          total_customers: number
+        }[]
+      }
       rpc_analytics_geo: {
         Args: { filters?: Json; from_ts: string; to_ts: string }
         Returns: {
@@ -1901,6 +2072,20 @@ export type Database = {
           product_name: string
           return_rate: number
           sku_margin: number
+        }[]
+      }
+      rpc_analytics_profit_margins: {
+        Args: { from_ts: string; to_ts: string }
+        Returns: {
+          avg_selling_price: number
+          category: string
+          cost_of_goods: number
+          gross_profit: number
+          gross_revenue: number
+          product_id: string
+          product_name: string
+          profit_margin_pct: number
+          units_sold: number
         }[]
       }
       rpc_analytics_sla: {

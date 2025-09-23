@@ -2,8 +2,10 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { analyticsClient, AnalyticsFilters as IAnalyticsFilters } from '@/integrations/supabase/analytics';
 import { formatPrice, formatPercentage } from '@/lib/format';
+import { AdvancedAnalyticsDashboard } from '@/components/analytics/AdvancedAnalyticsDashboard';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -12,7 +14,8 @@ import {
   Package, 
   DollarSign, 
   Target,
-  ShoppingCart
+  ShoppingCart,
+  Zap
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
 
@@ -99,12 +102,18 @@ function SimpleDataTable({ data, columns }: SimpleDataTableProps) {
 }
 
 export default function AdminAnalytics() {
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [dateRange, setDateRange] = React.useState({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
     to: new Date()
   });
   
   const [filters, setFilters] = React.useState<IAnalyticsFilters>({});
+
+  // Show advanced dashboard by default or when requested
+  if (showAdvanced) {
+    return <AdvancedAnalyticsDashboard />;
+  }
 
   // Fetch overview metrics
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useQuery({
@@ -200,7 +209,14 @@ export default function AdminAnalytics() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Basic analytics overview</p>
+        </div>
+        <Button onClick={() => setShowAdvanced(true)} className="flex items-center gap-2">
+          <Zap className="h-4 w-4" />
+          Advanced Analytics
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
