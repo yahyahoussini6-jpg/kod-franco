@@ -250,7 +250,7 @@ export function AdvancedAnalyticsDashboard() {
         onDateRangeChange={setDateRange}
         filters={filters}
         onFiltersChange={setFilters}
-        filterOptions={filterOptions}
+        filterOptions={filterOptions || { cities: [], couriers: [], sources: [], categories: [] }}
       />
 
       {/* Dashboard Tabs */}
