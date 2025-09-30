@@ -110,25 +110,6 @@ function Navigation() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
-            <ThemeSwitcher />
-            {user ? (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/admin">
-                    <Package className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/auth">
-                  <User className="h-4 w-4" />
-                </Link>
-              </Button>
-            )}
             <CartIcon />
           </div>
 
@@ -198,30 +179,6 @@ function Navigation() {
               >
                 Contact
               </Link>
-              
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <ThemeSwitcher />
-                  {user ? (
-                    <>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Package className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { signOut(); setIsMobileMenuOpen(false); }}>
-                        <LogOut className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                        <User className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         )}
