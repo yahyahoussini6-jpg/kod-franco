@@ -19,7 +19,7 @@ import { toast } from "sonner";
 const categorySchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   description: z.string().optional(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
 });
 
 type CategoryForm = z.infer<typeof categorySchema>;
