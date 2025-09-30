@@ -146,7 +146,6 @@ export function AnalyticsFilters({
                   <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
                   {filterOptions.cities.map((city) => (
                     <SelectItem key={city} value={city}>
                       {city}
@@ -179,7 +178,6 @@ export function AnalyticsFilters({
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
                   {filterOptions.couriers.map((courier) => (
                     <SelectItem key={courier} value={courier}>
                       {courier}
@@ -212,7 +210,6 @@ export function AnalyticsFilters({
                   <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
                   {filterOptions.sources.map((source) => (
                     <SelectItem key={source} value={source}>
                       {source}
