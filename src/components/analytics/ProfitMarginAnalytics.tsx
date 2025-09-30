@@ -3,10 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/format';
 import { ProfitMarginMetrics } from '@/integrations/supabase/analytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Package, DollarSign, Percent } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, Percent, Edit } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const costSchema = z.object({
+  cost_price: z.number().min(0, 'Cost must be positive'),
+  weight_kg: z.number().min(0, 'Weight must be positive').optional()
+});
+
+type CostForm = z.infer<typeof costSchema>;
 
 interface ProfitMarginAnalyticsProps {
   data: ProfitMarginMetrics[];
@@ -16,6 +32,57 @@ interface ProfitMarginAnalyticsProps {
 export function ProfitMarginAnalytics({ data, isLoading }: ProfitMarginAnalyticsProps) {
   const [sortBy, setSortBy] = useState<'profit' | 'margin' | 'revenue'>('profit');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [editingProduct, setEditingProduct] = useState<{ id: string; name: string; cost: number; weight: number } | null>(null);
+  const queryClient = useQueryClient();
+
+  const form = useForm<CostForm>({
+    resolver: zodResolver(costSchema),
+    defaultValues: {
+      cost_price: 0,
+      weight_kg: 0
+    }
+  });
+
+  const updateCostMutation = useMutation({
+    mutationFn: async ({ productId, cost_price, weight_kg }: { productId: string; cost_price: number; weight_kg?: number }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          cost_price,
+          weight_kg: weight_kg || 0
+        })
+        .eq('id', productId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Product cost updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['analytics-profit'] });
+      setEditingProduct(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error('Failed to update product cost');
+      console.error('Error updating product cost:', error);
+    }
+  });
+
+  const handleEditClick = (productId: string, productName: string, currentCost: number, currentWeight: number) => {
+    setEditingProduct({ id: productId, name: productName, cost: currentCost, weight: currentWeight });
+    form.reset({
+      cost_price: currentCost,
+      weight_kg: currentWeight
+    });
+  };
+
+  const handleSubmit = form.handleSubmit((values) => {
+    if (!editingProduct) return;
+    updateCostMutation.mutate({
+      productId: editingProduct.id,
+      cost_price: values.cost_price,
+      weight_kg: values.weight_kg
+    });
+  });
 
   if (isLoading) {
     return (
@@ -270,6 +337,7 @@ export function ProfitMarginAnalytics({ data, isLoading }: ProfitMarginAnalytics
                   <th className="text-right p-3 font-medium">Cost</th>
                   <th className="text-right p-3 font-medium">Profit</th>
                   <th className="text-right p-3 font-medium">Margin</th>
+                  <th className="text-center p-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -295,6 +363,20 @@ export function ProfitMarginAnalytics({ data, isLoading }: ProfitMarginAnalytics
                           </Badge>
                         </div>
                       </td>
+                      <td className="p-3 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditClick(
+                            item.product_id,
+                            item.product_name,
+                            Number(item.cost_of_goods) / Math.max(item.units_sold, 1),
+                            0
+                          )}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -303,6 +385,54 @@ export function ProfitMarginAnalytics({ data, isLoading }: ProfitMarginAnalytics
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Cost Dialog */}
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Product Cost</DialogTitle>
+            <DialogDescription>
+              Update the cost price and weight for {editingProduct?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cost_price">Cost Price (MAD)</Label>
+              <Input
+                id="cost_price"
+                type="number"
+                step="0.01"
+                {...form.register('cost_price', { valueAsNumber: true })}
+              />
+              {form.formState.errors.cost_price && (
+                <p className="text-sm text-destructive">{form.formState.errors.cost_price.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="weight_kg">Weight (kg)</Label>
+              <Input
+                id="weight_kg"
+                type="number"
+                step="0.01"
+                {...form.register('weight_kg', { valueAsNumber: true })}
+              />
+              {form.formState.errors.weight_kg && (
+                <p className="text-sm text-destructive">{form.formState.errors.weight_kg.message}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateCostMutation.isPending}>
+                {updateCostMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
