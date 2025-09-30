@@ -110,11 +110,6 @@ export default function AdminAnalytics() {
   
   const [filters, setFilters] = React.useState<IAnalyticsFilters>({});
 
-  // Show advanced dashboard by default or when requested
-  if (showAdvanced) {
-    return <AdvancedAnalyticsDashboard />;
-  }
-
   // Fetch overview metrics
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useQuery({
     queryKey: ['analytics-overview', dateRange, filters],
@@ -187,6 +182,11 @@ export default function AdminAnalytics() {
       { stage: 'Retournée', count: latest.retournee || 0, color: '#ff69b4' }
     ];
   }, [funnelData]);
+
+  // Show advanced dashboard if requested - AFTER all hooks are called
+  if (showAdvanced) {
+    return <AdvancedAnalyticsDashboard />;
+  }
 
   if (isLoading) {
     return (
