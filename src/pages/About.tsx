@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { Leaf, Users, Heart, Award, ArrowRight, FlaskConical, Gem, Microscope, Sparkles, BookOpen, Flag } from 'lucide-react';
+import { Leaf, Users, Heart, Award, ArrowRight, FlaskConical, Gem, Microscope, Sparkles, BookOpen, Flag, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +11,7 @@ const sectionVariants = {
   visible: { 
     opacity: 1, 
     y: 0,
-    transition: { duration: 0.8, ease: "easeOut", staggerChildren: 0.2 }
+    transition: { duration: 0.8, staggerChildren: 0.2 }
   }
 };
 

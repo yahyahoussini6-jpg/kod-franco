@@ -19,7 +19,7 @@ const sectionVariants = {
   visible: { 
     opacity: 1, 
     y: 0,
-    transition: { duration: 0.7, ease: "easeOut" }
+    transition: { duration: 0.7 }
   }
 };
 
@@ -196,8 +196,8 @@ const Index = () => {
             description: item.description,
             category: item.category_id,
             in_stock: item.en_stock,
-            thumbnail_image: item.media?.[0]?.url,
-            images: item.media?.map(m => m.url) || [],
+            thumbnail_image: Array.isArray(item.media) && item.media[0] && typeof item.media[0] === 'object' && 'url' in item.media[0] ? (item.media[0] as any).url : null,
+            images: Array.isArray(item.media) ? item.media.filter(m => typeof m === 'object' && m !== null && 'url' in m).map(m => (m as any).url) : [],
             rating: 4.5,
             discount_percentage: 0
           }));
