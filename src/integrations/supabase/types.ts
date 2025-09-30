@@ -1670,6 +1670,51 @@ export type Database = {
           },
         ]
       }
+      social_media_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          account_id: string | null
+          account_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_synced_at: string | null
+          platform: string
+          refresh_token_encrypted: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          account_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          platform: string
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          account_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          platform?: string
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       social_metrics: {
         Row: {
           campaign_id: string | null

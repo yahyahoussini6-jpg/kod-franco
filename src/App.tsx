@@ -49,6 +49,7 @@ import AdminBlog from "./pages/admin/Blog";
 import BlogNew from "./pages/admin/BlogNew";
 import SEOManagement from "./pages/admin/SEOManagement";
 import AdminBundleCustomizations from "./pages/admin/BundleCustomizations";
+import AdminSocialMedia from "./pages/admin/SocialMediaConnections";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -234,6 +235,7 @@ const App = () => (
                     <Route path="bundle-customizations" element={<AdminBundleCustomizations />} />
                     <Route path="bundle-offers" element={<AdminBundleOffers />} />
                     <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="social-media" element={<AdminSocialMedia />} />
                     <Route path="system" element={<SystemPage />} />
                     <Route path="whatsapp" element={<WhatsAppSettings />} />
                   </Route>

@@ -19,10 +19,10 @@ import {
   TestTube,
   ChevronRight,
   ChevronDown,
-  TrendingUp
+  TrendingUp,
+  MessageSquare,
+  Share2
 } from 'lucide-react';
-
-import { MessageSquare } from 'lucide-react';
 
 const navigation = [
   { name: 'Analytics', href: '/admin', icon: BarChart3, exact: true },
@@ -50,6 +50,7 @@ const navigation = [
       { name: 'Offres Bundle', href: '/admin/bundle-offers', icon: Package },
       { name: 'Personnalisation Bundle', href: '/admin/bundle-customizations', icon: Settings },
       { name: 'Avis Clients', href: '/admin/reviews', icon: MessageSquare },
+      { name: 'Réseaux Sociaux', href: '/admin/social-media', icon: Share2 },
     ]
   },
   { 
